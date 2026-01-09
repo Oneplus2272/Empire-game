@@ -5,50 +5,247 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Empire: Dawn of War</title>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+        }
+        
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #000; 
+            position: fixed; 
+            font-family: 'Arial', sans-serif;
+        }
 
         /* ЗАГРУЗКА 7 СЕКУНД */
         #loading-screen {
-            position: fixed; inset: 0; background: url('bg.png') no-repeat center center / cover;
-            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-            z-index: 5000; padding: 60px 0;
+            position: fixed; 
+            inset: 0; 
+            background: url('bg.png') no-repeat center center / cover;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            align-items: center;
+            z-index: 5000; 
+            padding: 60px 0;
         }
-        .game-title { color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 0 0 15px #000; text-transform: uppercase; font-family: serif; }
-        .loader-wrap { width: 85%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
-        .loader-cont { width: 100%; height: 26px; background: #000; border: 4px solid #ffd700; position: relative; }
-        #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
+        .game-title { 
+            color: #ffd700; 
+            font-size: clamp(24px, 5vw, 32px); 
+            font-weight: bold; 
+            text-align: center; 
+            text-shadow: 0 0 15px #000; 
+            text-transform: uppercase; 
+            font-family: serif; 
+        }
+        .loader-wrap { 
+            width: 85%; 
+            max-width: 400px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .loader-cont { 
+            width: 100%; 
+            height: 26px; 
+            background: #000; 
+            border: 4px solid #ffd700; 
+            position: relative; 
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #progress { 
+            width: 0%; 
+            height: 100%; 
+            background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b);
+            transition: width 0.1s ease;
+        }
 
         /* ДИАЛОГ В РАМКЕ */
         #dialog-screen { 
-            position: fixed; inset: 0; z-index: 4000; display: none;
+            position: fixed; 
+            inset: 0; 
+            z-index: 4000; 
+            display: none;
             background: linear-gradient(to bottom, transparent 20%, #000 90%);
-            flex-direction: column; justify-content: flex-end; align-items: center;
+            flex-direction: column; 
+            justify-content: flex-end; 
+            align-items: center;
         }
-        .character-img { height: 75%; position: absolute; bottom: 0; left: 0; z-index: 1; }
-        .dialog-box { width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; padding: 30px 20px; color: white; z-index: 10; font-family: serif; }
-        .btn-game { background: #8b0000; color: #ffd700; border: 2px solid #ffd700; padding: 18px; width: 100%; margin-top: 15px; font-weight: bold; text-transform: uppercase; }
+        .character-img { 
+            height: 75%; 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            z-index: 1; 
+            object-fit: contain;
+        }
+        .dialog-box { 
+            width: 100%; 
+            background: rgba(10, 10, 10, 0.98); 
+            border-top: 4px solid #ffd700; 
+            padding: 30px 20px; 
+            color: white; 
+            z-index: 10; 
+            font-family: serif; 
+        }
+        .btn-game { 
+            background: #8b0000; 
+            color: #ffd700; 
+            border: 2px solid #ffd700; 
+            padding: 18px; 
+            width: 100%; 
+            margin-top: 15px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .btn-game:hover {
+            background: #a00000;
+        }
 
         /* ИГРОВОЙ МИР */
-        #game-viewport { width: 100vw; height: 100vh; position: relative; display: none; overflow: hidden; cursor: grab; }
+        #game-viewport { 
+            width: 100vw; 
+            height: 100vh; 
+            position: relative; 
+            display: none; 
+            overflow: hidden; 
+            cursor: grab;
+            touch-action: none;
+        }
         
-        /* КАРТА - ТОТ САМЫЙ ВИЗУАЛ */
+        /* КАРТА - ДИНАМИЧЕСКИЙ РАЗМЕР */
         #map-layer {
             position: absolute;
-            width: 3000px; /* Размер как в удачной версии */
-            height: 3000px;
+            width: 4000px; /* Увеличен размер для масштабирования */
+            height: 4000px;
             background: url('map.png') no-repeat center center;
             background-size: cover;
             will-change: transform;
-            transform: translate(-500px, -500px) scale(0.6); /* Начальный вид */
+            transform-origin: 0 0;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
 
-        .ui-panel {
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            width: 90%; height: 45px; background: rgba(0,0,0,0.85); border: 2px solid #ffd700;
-            display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-radius: 8px;
+        /* ЭФФЕКТ КЛИКА */
+        .click-effect {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, rgba(255,215,0,0) 70%);
+            pointer-events: none;
+            z-index: 100;
+            animation: clickPulse 0.6s ease-out forwards;
         }
-        .res { color: #ffd700; font-weight: bold; font-family: sans-serif; font-size: 14px; }
+        
+        @keyframes clickPulse {
+            0% {
+                transform: scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* UI ПАНЕЛЬ */
+        .ui-panel {
+            position: fixed; 
+            top: 15px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 90%; 
+            max-width: 500px;
+            height: 45px; 
+            background: rgba(0,0,0,0.85); 
+            border: 2px solid #ffd700;
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            z-index: 1000; 
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            padding: 0 20px;
+        }
+        .res { 
+            color: #ffd700; 
+            font-weight: bold; 
+            font-family: sans-serif; 
+            font-size: clamp(12px, 3vw, 14px); 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* КНОПКИ УПРАВЛЕНИЯ */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(139,0,0,0.7);
+            transform: scale(1.1);
+        }
+        
+        /* БОКОВАЯ ПАНЕЛЬ */
+        .side-panel {
+            position: fixed;
+            top: 80px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 1000;
+            color: white;
+            min-width: 120px;
+            display: none;
+        }
+        
+        .side-panel h3 {
+            color: #ffd700;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .coord-display {
+            font-size: 12px;
+            margin: 5px 0;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
@@ -65,18 +262,35 @@
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
             <h3 style="color:#ffd700; margin:0 0 10px 0;">МАРШАЛ КАЙ</h3>
-            <p>Мой лорд, карта готова. Мы вернули всё как было, но теперь она слушается ваших команд.</p>
+            <p>Мой лорд, карта готова. Мы вернули всё как было, но теперь она слушается ваших команд. Используйте колесо мыши для зума, перетаскивание для перемещения по карте.</p>
             <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
 
     <div id="game-viewport">
         <div class="ui-panel">
-            <div class="res">🌲 500</div>
-            <div class="res">⚔️ 200</div>
-            <div class="res">💰 100</div>
+            <div class="res">🌲 <span id="wood">500</span></div>
+            <div class="res">⚔️ <span id="troops">200</span></div>
+            <div class="res">💰 <span id="gold">100</span></div>
         </div>
+        
         <div id="map-layer"></div>
+        
+        <div class="controls">
+            <button class="control-btn" onclick="zoomIn()">+</button>
+            <button class="control-btn" onclick="zoomOut()">-</button>
+            <button class="control-btn" onclick="resetView()">⌖</button>
+        </div>
+        
+        <div class="side-panel" id="info-panel">
+            <h3>Информация</h3>
+            <div class="coord-display">Масштаб: <span id="scale-value">100%</span></div>
+            <div class="coord-display" id="coord-display">X: 0, Y: 0</div>
+            <div style="font-size: 11px; color: #aaa; margin-top: 10px;">
+                Двойной тап для зума<br>
+                Два пальца для зума
+            </div>
+        </div>
     </div>
 
     <script>
@@ -84,8 +298,8 @@
         let p = 0;
         let itv = setInterval(() => {
             p++;
-            document.getElementById('progress').style.width = p+'%';
-            document.getElementById('percent').innerText = p+'%';
+            document.getElementById('progress').style.width = p + '%';
+            document.getElementById('percent').innerText = p + '%';
             if(p >= 100) {
                 clearInterval(itv);
                 document.getElementById('loading-screen').style.display = 'none';
@@ -93,67 +307,287 @@
             }
         }, 70);
 
+        let mapEngine = null;
+
         function startGame() {
             document.getElementById('dialog-screen').style.display = 'none';
             document.getElementById('game-viewport').style.display = 'block';
-            initEngine();
+            mapEngine = initEngine();
         }
 
-        // 2. ИСПРАВЛЕННЫЙ ДВИЖОК ПЕРЕМЕЩЕНИЯ
+        // 2. УЛУЧШЕННЫЙ ДВИЖОК КАРТЫ
         function initEngine() {
             const map = document.getElementById('map-layer');
-            let scale = 0.6;
-            let pos = { x: -500, y: -500 };
+            const viewport = document.getElementById('game-viewport');
+            const infoPanel = document.getElementById('info-panel');
+            const scaleValue = document.getElementById('scale-value');
+            const coordDisplay = document.getElementById('coord-display');
+            
+            let scale = 1;
+            let pos = { x: -window.innerWidth/2, y: -window.innerHeight/2 };
             let isDragging = false;
             let startDrag = { x: 0, y: 0 };
             let lastDist = 0;
+            let lastTap = 0;
+            let lastTapX = 0;
+            let lastTapY = 0;
+
+            // Автоподстройка под размер экрана
+            function adjustMapSize() {
+                const aspectRatio = 4000/4000; // Соотношение сторон карты
+                const screenAspect = window.innerWidth / window.innerHeight;
+                
+                if (screenAspect > aspectRatio) {
+                    // Широкий экран
+                    scale = window.innerHeight / 4000 * 1.2;
+                } else {
+                    // Высокий экран
+                    scale = window.innerWidth / 4000 * 1.2;
+                }
+                
+                pos.x = -window.innerWidth/2;
+                pos.y = -window.innerHeight/2;
+                
+                update();
+            }
 
             function update() {
                 map.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
+                scaleValue.textContent = `${Math.round(scale * 100)}%`;
+                coordDisplay.textContent = `X: ${Math.round(-pos.x)}, Y: ${Math.round(-pos.y)}`;
+                
+                // Проверка границ карты
+                const bounds = getMapBounds();
+                if (pos.x > bounds.maxX) pos.x = bounds.maxX;
+                if (pos.x < bounds.minX) pos.x = bounds.minX;
+                if (pos.y > bounds.maxY) pos.y = bounds.maxY;
+                if (pos.y < bounds.minY) pos.y = bounds.minY;
+            }
+
+            function getMapBounds() {
+                const mapWidth = 4000 * scale;
+                const mapHeight = 4000 * scale;
+                
+                return {
+                    minX: -mapWidth + window.innerWidth * 0.8,
+                    maxX: -window.innerWidth * 0.2,
+                    minY: -mapHeight + window.innerHeight * 0.8,
+                    maxY: -window.innerHeight * 0.2
+                };
+            }
+
+            // Создание эффекта клика
+            function createClickEffect(x, y) {
+                const effect = document.createElement('div');
+                effect.className = 'click-effect';
+                effect.style.left = `${x - 20}px`;
+                effect.style.top = `${y - 20}px`;
+                document.getElementById('game-viewport').appendChild(effect);
+                
+                setTimeout(() => {
+                    effect.remove();
+                }, 600);
             }
 
             const onStart = (e) => {
-                isDragging = true;
-                const t = e.touches ? e.touches[0] : e;
-                startDrag.x = t.clientX - pos.x;
-                startDrag.y = t.clientY - pos.y;
+                e.preventDefault();
                 
-                if (e.touches && e.touches.length === 2) {
-                    lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                if (e.touches) {
+                    if (e.touches.length === 1) {
+                        // Одинарное нажатие
+                        const now = Date.now();
+                        const t = e.touches[0];
+                        const tapX = t.clientX;
+                        const tapY = t.clientY;
+                        
+                        if (now - lastTap < 300 && 
+                            Math.abs(tapX - lastTapX) < 20 && 
+                            Math.abs(tapY - lastTapY) < 20) {
+                            // Двойной тап
+                            const targetScale = scale * 1.5;
+                            scale = Math.min(1.5, Math.max(0.3, targetScale));
+                            
+                            // Смещение к точке тапа
+                            const rect = viewport.getBoundingClientRect();
+                            const relativeX = (tapX - rect.left) / rect.width;
+                            const relativeY = (tapY - rect.top) / rect.height;
+                            
+                            const mapRect = getMapBounds();
+                            pos.x = -relativeX * (4000 * scale) + tapX;
+                            pos.y = -relativeY * (4000 * scale) + tapY;
+                            
+                            createClickEffect(tapX, tapY);
+                        }
+                        
+                        lastTap = now;
+                        lastTapX = tapX;
+                        lastTapY = tapY;
+                        
+                        isDragging = true;
+                        startDrag.x = t.clientX - pos.x;
+                        startDrag.y = t.clientY - pos.y;
+                    } else if (e.touches.length === 2) {
+                        // Два пальца - зум
+                        lastDist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                    }
+                } else {
+                    // Мышь
+                    isDragging = true;
+                    startDrag.x = e.clientX - pos.x;
+                    startDrag.y = e.clientY - pos.y;
+                    viewport.style.cursor = 'grabbing';
                 }
+                
+                infoPanel.style.display = 'block';
             };
 
             const onMove = (e) => {
+                e.preventDefault();
+                
                 if (!isDragging) return;
-                const t = e.touches ? e.touches[0] : e;
-
-                if (e.touches && e.touches.length === 2) {
-                    // ЗУМ
-                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                    scale *= (dist / lastDist);
-                    scale = Math.max(0.3, Math.min(1.5, scale));
-                    lastDist = dist;
+                
+                if (e.touches) {
+                    if (e.touches.length === 2) {
+                        // Зум двумя пальцами
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        
+                        const delta = dist / lastDist;
+                        const newScale = Math.max(0.3, Math.min(1.5, scale * delta));
+                        
+                        // Центр зума между пальцами
+                        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                        
+                        // Корректировка позиции при зуме
+                        const scaleRatio = newScale / scale;
+                        pos.x = centerX - (centerX - pos.x) * scaleRatio;
+                        pos.y = centerY - (centerY - pos.y) * scaleRatio;
+                        
+                        scale = newScale;
+                        lastDist = dist;
+                    } else if (e.touches.length === 1) {
+                        // Перемещение одним пальцем
+                        const t = e.touches[0];
+                        pos.x = t.clientX - startDrag.x;
+                        pos.y = t.clientY - startDrag.y;
+                    }
                 } else {
-                    // ПЕРЕМЕЩЕНИЕ
-                    pos.x = t.clientX - startDrag.x;
-                    pos.y = t.clientY - startDrag.y;
+                    // Перемещение мышью
+                    pos.x = e.clientX - startDrag.x;
+                    pos.y = e.clientY - startDrag.y;
                 }
+                
                 update();
             };
 
-            window.addEventListener('mousedown', onStart);
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', () => isDragging = false);
-            window.addEventListener('touchstart', onStart);
-            window.addEventListener('touchmove', onMove, { passive: false });
-            window.addEventListener('touchend', () => isDragging = false);
+            const onEnd = () => {
+                isDragging = false;
+                viewport.style.cursor = 'grab';
+                
+                // Скрываем панель через 3 секунды
+                setTimeout(() => {
+                    if (!isDragging) {
+                        infoPanel.style.display = 'none';
+                    }
+                }, 3000);
+            };
 
-            window.addEventListener('wheel', e => {
+            // Обработка клика по карте
+            const onClick = (e) => {
+                if (e.touches) return; // Для тач-устройств отдельная логика
+                
+                createClickEffect(e.clientX, e.clientY);
+                
+                // Можно добавить логику обработки клика
+                // Например, выбор юнита или постройки
+                console.log('Клик по координатам:', {
+                    screenX: e.clientX,
+                    screenY: e.clientY,
+                    mapX: Math.round((-pos.x + e.clientX) / scale),
+                    mapY: Math.round((-pos.y + e.clientY) / scale)
+                });
+            };
+
+            // Зум колесом мыши
+            const onWheel = (e) => {
+                e.preventDefault();
+                
                 const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                scale = Math.max(0.3, Math.min(1.5, scale * delta));
+                const newScale = Math.max(0.3, Math.min(1.5, scale * delta));
+                
+                // Центр зума - позиция мыши
+                const rect = viewport.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Корректировка позиции при зуме
+                const scaleRatio = newScale / scale;
+                pos.x = mouseX - (mouseX - pos.x) * scaleRatio;
+                pos.y = mouseY - (mouseY - pos.y) * scaleRatio;
+                
+                scale = newScale;
                 update();
-            });
+                
+                infoPanel.style.display = 'block';
+            };
+
+            // Привязка событий
+            viewport.addEventListener('mousedown', onStart);
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+            viewport.addEventListener('click', onClick);
+            viewport.addEventListener('wheel', onWheel, { passive: false });
+            
+            viewport.addEventListener('touchstart', onStart, { passive: false });
+            viewport.addEventListener('touchmove', onMove, { passive: false });
+            viewport.addEventListener('touchend', onEnd);
+            viewport.addEventListener('touchcancel', onEnd);
+
+            // Обработка ресайза окна
+            window.addEventListener('resize', adjustMapSize);
+            
+            // Инициализация
+            adjustMapSize();
+            
+            // Возвращаем API для внешнего управления
+            return {
+                zoomIn: () => {
+                    scale = Math.min(1.5, scale * 1.2);
+                    update();
+                },
+                zoomOut: () => {
+                    scale = Math.max(0.3, scale * 0.8);
+                    update();
+                },
+                resetView: () => {
+                    adjustMapSize();
+                },
+                getScale: () => scale,
+                getPosition: () => ({...pos})
+            };
         }
+
+        // Функции управления
+        function zoomIn() {
+            if (mapEngine) mapEngine.zoomIn();
+        }
+        
+        function zoomOut() {
+            if (mapEngine) mapEngine.zoomOut();
+        }
+        
+        function resetView() {
+            if (mapEngine) mapEngine.resetView();
+        }
+
+        // Предотвращаем контекстное меню
+        document.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
 </html>
