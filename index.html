@@ -2,77 +2,70 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Empire: Dawn of War</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
-
-        /* Экраны игры */
-        .screen { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; display: none; transition: opacity 1s; }
-
-        /* Начальный экран */
-        #start-screen { 
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; }
+        
+        /* Экран загрузки */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('bg.png') no-repeat center center / cover;
+            z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
 
-        /* Экран диалогов */
-        #dialog-screen { 
-            background: linear-gradient(to bottom, rgba(0,0,0,0.5), #000);
-            display: none; flex-direction: column; justify-content: flex-end; align-items: center;
+        .loader-container {
+            width: 70%; max-width: 300px; height: 14px;
+            background: rgba(0,0,0,0.6); border: 2px solid #C0C0C0; /* Серебряные края */
+            border-radius: 10px; position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        /* Элементы диалога */
-        .character-img { height: 70%; position: absolute; bottom: 0; left: 0; }
-        .dialog-box { 
-            width: 100%; background: rgba(0,0,0,0.85); border-top: 3px solid #ffd700; 
-            padding: 20px; color: white; box-sizing: border-box; z-index: 10;
+        .loader-bar {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            position: relative; transition: width 0.1s linear;
         }
 
-        /* Кнопки */
-        .btn-game {
-            background: #8b0000; color: #ffd700; border: 2px solid #ffd700;
-            padding: 10px 20px; margin: 5px; font-weight: bold; cursor: pointer; border-radius: 5px;
+        /* Анимация блеска */
+        .loader-bar::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shine 1.5s infinite;
         }
 
-        /* Экран КАРТЫ */
-        #map-screen { width: 100vw; height: 100vh; position: relative; }
+        @keyframes shine {
+            to { left: 150%; }
+        }
+
+        .loading-text { color: #C0C0C0; margin-top: 10px; font-family: serif; font-size: 12px; letter-spacing: 2px; }
+
+        /* Карта на весь экран */
+        #map-screen { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; display: none; }
         #game-map { width: 100%; height: 100%; background: #000; }
 
         .top-bar {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px; height: 50px;
-            background: rgba(0,0,0,0.85); border: 2px solid #ffd700; border-radius: 10px;
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 1000;
+            width: 90%; max-width: 400px; height: 40px;
+            background: rgba(0,0,0,0.8); border: 1px solid #ffd700; border-radius: 8px;
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
-        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
+        .res { color: #ffd700; font-size: 13px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="start-screen" class="screen" style="display: flex;">
-        <h1 style="color: #ffd700; text-shadow: 2px 2px #000;">EMPIRE: DAWN</h1>
-        <button class="btn-game" onclick="startGame()">НАЧАТЬ ПУТЬ</button>
-    </div>
-
-    <div id="dialog-screen" class="screen">
-        <img id="char-image" src="marshal_blank.png" class="character-img">
-        <div class="dialog-box">
-            <h3 id="char-name" style="color: #ffd700; margin-top: 0;">Кай</h3>
-            <p id="dialog-text">Командующий! Мы прибыли. С чего начнем строительство нашей базы?</p>
-            <div id="options">
-                <button class="btn-game" onclick="goToMap('sawmill')">Лесопилка</button>
-                <button class="btn-game" onclick="goToMap('blacksmith')">Кузница</button>
-            </div>
+    <div id="loading-screen">
+        <div style="color:#ffd700; margin-bottom: 20px; font-size: 24px; text-shadow: 2px 2px #000;">ЗАГРУЗКА ИМПЕРИИ</div>
+        <div class="loader-container">
+            <div id="progress" class="loader-bar"></div>
         </div>
+        <div id="percent-text" class="loading-text">0%</div>
     </div>
 
-    <div id="map-screen" class="screen">
+    <div id="map-screen">
         <div class="top-bar">
             <div class="res">🌲 <span id="wood">500</span></div>
             <div class="res">⚔️ <span id="steel">200</span></div>
@@ -82,34 +75,40 @@
     </div>
 
     <script>
-        let map;
+        // ЛОГИКА ЗАГРУЗКИ
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 1;
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('percent-text').innerText = progress + '%';
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                finishLoading();
+            }
+        }, 70); // 70мс * 100 = 7 секунд
 
-        function startGame() {
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('dialog-screen').style.display = 'flex';
+        function finishLoading() {
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('map-screen').style.display = 'block';
+            initMap();
         }
 
-        function goToMap(choice) {
-            document.getElementById('dialog-screen').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('dialog-screen').style.display = 'none';
-                document.getElementById('map-screen').style.display = 'block';
-                initMap();
-            }, 800);
-        }
-
+        // ЛОГИКА КАРТЫ
         function initMap() {
-            map = L.map('game-map', {
+            const map = L.map('game-map', {
                 crs: L.CRS.Simple,
-                minZoom: -2,
-                maxZoom: 2,
+                minZoom: -1,
+                maxZoom: 1,
                 zoomControl: false,
-                attributionControl: false
+                attributionControl: false,
+                dragging: true,
+                inertia: false // Убирает "дерганье" при отпускании пальца
             });
 
-            const mapImg = new Image();
-            mapImg.src = 'map.png';
-            mapImg.onload = function() {
+            const img = new Image();
+            img.src = 'map.png';
+            img.onload = function() {
                 const w = this.width;
                 const h = this.height;
                 const bounds = [[0, 0], [h, w]];
@@ -118,11 +117,10 @@
                 map.setMaxBounds(bounds);
             };
 
-            // Система получения координат
-            map.on('click', function(e) {
-                let lat = Math.round(e.latlng.lat);
-                let lng = Math.round(e.latlng.lng);
-                prompt("Координаты точки для здания:", lat + ", " + lng);
+            // Чтобы не выскакивало окно при каждом движении, 
+            // используем контекстное меню или долгое нажатие для координат в будущем
+            map.on('contextmenu', (e) => {
+                alert(Math.round(e.latlng.lat) + ", " + Math.round(e.latlng.lng));
             });
         }
     </script>
