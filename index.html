@@ -6,47 +6,41 @@
     <title>Empire: Dawn of War</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; }
 
-        /* ЗАГРУЗКА */
+        /* ЗАГРУЗКА 7 СЕКУНД */
         #loading-screen {
             position: fixed; inset: 0; background: url('bg.png') no-repeat center center / cover;
             display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             z-index: 5000; padding: 60px 0;
         }
-        .game-title { color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 0 0 15px #000; text-transform: uppercase; }
+        .game-title { color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 0 0 15px #000; text-transform: uppercase; font-family: serif; }
         .loader-wrap { width: 85%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
         .loader-cont { width: 100%; height: 26px; background: #000; border: 4px solid #ffd700; position: relative; }
         #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
 
-        /* ДИАЛОГ */
+        /* ДИАЛОГ В РАМКЕ */
         #dialog-screen { 
             position: fixed; inset: 0; z-index: 4000; display: none;
             background: linear-gradient(to bottom, transparent 20%, #000 90%);
             flex-direction: column; justify-content: flex-end; align-items: center;
         }
         .character-img { height: 75%; position: absolute; bottom: 0; left: 0; z-index: 1; }
-        .dialog-box { width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; padding: 30px 20px; color: white; z-index: 10; }
-        .btn-game { background: #8b0000; color: #ffd700; border: 2px solid #ffd700; padding: 18px; width: 100%; margin-top: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .dialog-box { width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; padding: 30px 20px; color: white; z-index: 10; font-family: serif; }
+        .btn-game { background: #8b0000; color: #ffd700; border: 2px solid #ffd700; padding: 18px; width: 100%; margin-top: 15px; font-weight: bold; text-transform: uppercase; }
 
-        /* КАРТА */
-        #game-viewport { width: 100vw; height: 100vh; position: relative; display: none; overflow: hidden; }
+        /* ИГРОВОЙ МИР */
+        #game-viewport { width: 100vw; height: 100vh; position: relative; display: none; overflow: hidden; cursor: grab; }
         
-        /* Слой карты: теперь он адаптивный */
-        #map-wrapper {
+        /* КАРТА - ТОТ САМЫЙ ВИЗУАЛ */
+        #map-layer {
             position: absolute;
-            width: 250%; /* Запас для перемещения */
-            height: 250%;
-            top: -75%;
-            left: -75%;
+            width: 3000px; /* Размер как в удачной версии */
+            height: 3000px;
+            background: url('map.png') no-repeat center center;
+            background-size: cover;
             will-change: transform;
-        }
-
-        #map-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* КЛЮЧЕВОЙ МОМЕНТ ДЛЯ АДАПТАЦИИ */
-            display: block;
+            transform: translate(-500px, -500px) scale(0.6); /* Начальный вид */
         }
 
         .ui-panel {
@@ -54,7 +48,7 @@
             width: 90%; height: 45px; background: rgba(0,0,0,0.85); border: 2px solid #ffd700;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000; border-radius: 8px;
         }
-        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
+        .res { color: #ffd700; font-weight: bold; font-family: sans-serif; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -71,7 +65,7 @@
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
             <h3 style="color:#ffd700; margin:0 0 10px 0;">МАРШАЛ КАЙ</h3>
-            <p>Мой лорд, территория под контролем. Теперь карта подстроится под любое ваше устройство.</p>
+            <p>Мой лорд, карта готова. Мы вернули всё как было, но теперь она слушается ваших команд.</p>
             <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
@@ -82,13 +76,11 @@
             <div class="res">⚔️ 200</div>
             <div class="res">💰 100</div>
         </div>
-        <div id="map-wrapper">
-            <img src="map.png" id="map-img">
-        </div>
+        <div id="map-layer"></div>
     </div>
 
     <script>
-        // ЗАГРУЗКА
+        // 1. ЗАГРУЗКА
         let p = 0;
         let itv = setInterval(() => {
             p++;
@@ -107,49 +99,59 @@
             initEngine();
         }
 
+        // 2. ИСПРАВЛЕННЫЙ ДВИЖОК ПЕРЕМЕЩЕНИЯ
         function initEngine() {
-            const wrapper = document.getElementById('map-wrapper');
+            const map = document.getElementById('map-layer');
+            let scale = 0.6;
+            let pos = { x: -500, y: -500 };
             let isDragging = false;
-            let startX, startY;
-            let currentX = -window.innerWidth * 0.75;
-            let currentY = -window.innerHeight * 0.75;
-            let scale = 1;
+            let startDrag = { x: 0, y: 0 };
+            let lastDist = 0;
+
+            function update() {
+                map.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
+            }
 
             const onStart = (e) => {
                 isDragging = true;
                 const t = e.touches ? e.touches[0] : e;
-                startX = t.clientX - currentX;
-                startY = t.clientY - currentY;
+                startDrag.x = t.clientX - pos.x;
+                startDrag.y = t.clientY - pos.y;
+                
+                if (e.touches && e.touches.length === 2) {
+                    lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                }
             };
 
             const onMove = (e) => {
                 if (!isDragging) return;
                 const t = e.touches ? e.touches[0] : e;
-                currentX = t.clientX - startX;
-                currentY = t.clientY - startY;
 
-                // Ограничения
-                const limitX = wrapper.offsetWidth * 0.4;
-                const limitY = wrapper.offsetHeight * 0.4;
-                if (currentX > 0) currentX = 0;
-                if (currentY > 0) currentY = 0;
-
-                wrapper.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(${scale})`;
+                if (e.touches && e.touches.length === 2) {
+                    // ЗУМ
+                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    scale *= (dist / lastDist);
+                    scale = Math.max(0.3, Math.min(1.5, scale));
+                    lastDist = dist;
+                } else {
+                    // ПЕРЕМЕЩЕНИЕ
+                    pos.x = t.clientX - startDrag.x;
+                    pos.y = t.clientY - startDrag.y;
+                }
+                update();
             };
 
             window.addEventListener('mousedown', onStart);
             window.addEventListener('mousemove', onMove);
             window.addEventListener('mouseup', () => isDragging = false);
-
             window.addEventListener('touchstart', onStart);
             window.addEventListener('touchmove', onMove, { passive: false });
             window.addEventListener('touchend', () => isDragging = false);
 
-            // Зум колесиком
             window.addEventListener('wheel', e => {
-                scale += e.deltaY > 0 ? -0.05 : 0.05;
-                scale = Math.min(Math.max(0.5, scale), 2);
-                wrapper.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(${scale})`;
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                scale = Math.max(0.3, Math.min(1.5, scale * delta));
+                update();
             });
         }
     </script>
