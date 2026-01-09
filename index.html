@@ -8,79 +8,69 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; background: #000; position: fixed; 
-            font-family: 'serif'; 
         }
         
-        /* Фикс для Leaflet: убираем серые границы */
-        .leaflet-container { background: #000 !important; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 100; }
 
-        .screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: none; z-index: 100; }
-
-        /* ЭКРАН ЗАГРУЗКИ */
+        /* ЗАГРУЗКА */
         #loading-screen {
             display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             background: url('bg.png') no-repeat center center / cover; z-index: 5000;
-            padding: 50px 0;
+            padding: 40px 0;
         }
 
         .game-title {
-            color: #ffd700; font-size: 38px; font-weight: bold; text-align: center;
-            text-shadow: 0 0 20px #000, 2px 2px 0px #8b0000;
-            letter-spacing: 5px; text-transform: uppercase; margin-top: 10px;
+            color: #ffd700; font-size: 34px; font-weight: bold; text-align: center;
+            text-shadow: 0 0 15px #000, 2px 2px 5px #000;
+            letter-spacing: 3px; text-transform: uppercase; margin-top: 20px;
         }
 
         .loader-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
         
         .loader-container {
-            width: 80%; max-width: 400px; height: 30px;
-            background: #000; border: 4px solid #ffd700; 
-            box-shadow: 0 0 15px rgba(255,215,0,0.5);
-            position: relative; overflow: hidden;
+            width: 85%; max-width: 400px; height: 28px;
+            background: #111; border: 4px solid #ffd700; 
+            position: relative; overflow: hidden; box-shadow: 0 0 15px #ffd70055;
         }
 
         .loader-bar {
             width: 0%; height: 100%;
-            background: linear-gradient(180deg, #fff 0%, #ffd700 50%, #b8860b 100%);
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.5);
+            background: linear-gradient(180deg, #fff2ac 0%, #ffd700 50%, #b8860b 100%);
         }
 
-        /* ЭКРАН ДИАЛОГА */
+        /* ДИАЛОГ */
         #dialog-screen { 
-            background: linear-gradient(to bottom, transparent 20%, #000 90%);
+            background: linear-gradient(to bottom, transparent 30%, #000 85%);
             display: none; flex-direction: column; justify-content: flex-end; align-items: center;
         }
-        .character-img { height: 80%; position: absolute; bottom: 0; left: -10%; z-index: 1; filter: drop-shadow(0 0 10px #000); }
+        .character-img { height: 75%; position: absolute; bottom: 0; left: 0; z-index: 1; }
         .dialog-box { 
-            width: 100%; background: rgba(10, 10, 10, 0.95); border-top: 5px solid #ffd700; 
-            padding: 30px 20px; color: white; box-sizing: border-box; z-index: 10;
+            width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; 
+            padding: 25px; color: white; box-sizing: border-box; z-index: 10;
+        }
+        .btn-game {
+            background: linear-gradient(#900, #500); color: #ffd700; border: 2px solid #ffd700;
+            padding: 15px; width: 100%; margin-top: 10px; font-weight: bold; font-size: 16px;
         }
 
-        /* КАРТА - ТУТ ВЕСЬ ФИКС */
-        #map-screen { z-index: 50; width: 100vw; height: 100vh; overflow: hidden; }
-        #game-map { width: 100vw !important; height: 100vh !important; touch-action: auto; }
+        /* КАРТА (ВЕСЬ ЭКРАН) */
+        #map-screen { z-index: 50; width: 100vw; height: 100vh; }
+        #game-map { width: 100%; height: 100%; background: #000; }
         
-        /* Заставляем картинку растягиваться */
-        .leaflet-image-layer { 
-            object-fit: cover !important; 
-            width: 100% !important; 
-            height: 100% !important; 
-        }
+        /* Принудительное растягивание картинки */
+        .leaflet-image-layer { object-fit: fill !important; }
 
         .top-bar {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; height: 50px;
-            background: rgba(0,0,0,0.85); border: 2px solid #ffd700; border-radius: 8px;
+            width: 95%; max-width: 450px; height: 45px;
+            background: rgba(0,0,0,0.8); border: 2px solid #ffd700; border-radius: 4px;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
-        .res { color: #ffd700; font-weight: bold; font-size: 16px; text-shadow: 1px 1px #000; }
-        .btn-game {
-            background: #8b0000; color: #ffd700; border: 2px solid #ffd700;
-            padding: 15px; width: 100%; margin: 10px 0; font-weight: bold; font-size: 18px;
-        }
+        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -99,8 +89,8 @@
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
             <h3 style="color: #ffd700; margin: 0 0 10px 0;">МАРШАЛ КАЙ</h3>
-            <p id="dialog-text">Мой лорд, карта готова. Пора занять трон!</p>
-            <button class="btn-game" onclick="startMap()">ВСТУПИТЬ В ПРАВА</button>
+            <p>Мой лорд, войска готовы. Ваша цитадель ждет приказа!</p>
+            <button class="btn-game" onclick="showMap()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
 
@@ -114,46 +104,49 @@
     </div>
 
     <script>
-        let progress = 0;
-        const loadInterval = setInterval(() => {
-            progress += 1;
-            document.getElementById('progress').style.width = progress + '%';
-            document.getElementById('percent-text').innerText = progress + '%';
-            if (progress >= 100) {
-                clearInterval(loadInterval);
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('dialog-screen').style.display = 'flex';
+        // Загрузка
+        let prg = 0;
+        const itv = setInterval(() => {
+            prg++;
+            document.getElementById('progress').style.width = prg + '%';
+            document.getElementById('percent-text').innerText = prg + '%';
+            if(prg>=100){
+                clearInterval(itv);
+                document.getElementById('loading-screen').style.display='none';
+                document.getElementById('dialog-screen').style.display='flex';
             }
         }, 70);
 
-        function startMap() {
-            document.getElementById('dialog-screen').style.display = 'none';
-            document.getElementById('map-screen').style.display = 'block';
-            setTimeout(initMap, 100); 
-        }
-
-        function initMap() {
+        function showMap() {
+            document.getElementById('dialog-screen').style.display='none';
+            document.getElementById('map-screen').style.display='block';
+            
+            // Инициализация карты ПОСЛЕ того как блок стал видимым
             const map = L.map('game-map', {
                 crs: L.CRS.Simple,
-                minZoom: -3,
+                minZoom: -2,
                 maxZoom: 2,
                 zoomControl: false,
                 attributionControl: false
             });
 
-            // РЕШАЮЩИЙ МОМЕНТ: Используем размер окна для границ карты
-            const w = window.innerWidth;
+            // Берем реальный размер экрана устройства
             const h = window.innerHeight;
-            const bounds = [[0, 0], [h, w]]; 
+            const w = window.innerWidth;
+            const bounds = [[0, 0], [h, w]];
 
             L.imageOverlay('map.png', bounds).addTo(map);
             map.fitBounds(bounds);
-            map.setMaxBounds(bounds);
 
-            // Режим координат (долгое нажатие)
-            map.on('contextmenu', (e) => {
-                alert(Math.round(e.latlng.lat) + ", " + Math.round(e.latlng.lng));
-            });
+            // СТАВИМ ЗАМОК (Твои координаты: 500, 456)
+            // В CRS.Simple координаты могут отличаться, поэтому проверим центром
+            L.marker([h/2, w/2], {
+                icon: L.divIcon({
+                    className: 'castle-icon',
+                    html: '<div style="font-size:40px; filter: drop-shadow(0 0 5px gold);">🏰</div>',
+                    iconSize: [50, 50]
+                })
+            }).addTo(map).on('click', () => alert("Ваша Цитадель"));
         }
     </script>
 </body>
