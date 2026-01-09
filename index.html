@@ -3,134 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empire Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kelly+Slab&display=swap" rel="stylesheet">
+    <title>Empire: Dawn of War</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000;
-            font-family: 'Kelly Slab', serif;
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+
+        /* Экраны игры */
+        .screen { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; display: none; transition: opacity 1s; }
+
+        /* Начальный экран */
+        #start-screen { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: url('bg.png') no-repeat center center / cover;
         }
 
-        /* 1. ЗАГРУЗОЧНЫЙ ЭКРАН */
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #1a1a1a url('bg.png') no-repeat center center; 
-            background-size: cover;
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            z-index: 100; transition: opacity 0.8s ease;
+        /* Экран диалогов */
+        #dialog-screen { 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), #000);
+            display: none; flex-direction: column; justify-content: flex-end; align-items: center;
         }
 
-        .loader-bar { width: 70%; height: 8px; background: rgba(0,0,0,0.6); border: 1px solid #ffd700; margin-bottom: 60px; border-radius: 10px; }
-        .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); transition: width 0.2s; }
-        .percent-text { color: #ffd700; margin-bottom: 10px; font-size: 20px; text-shadow: 2px 2px 4px #000; }
-
-        /* 2. ЭКРАН ДИАЛОГА (КАЙ) */
-        #dialog-screen { position: relative; width: 100vw; height: 100vh; display: none; background: #000; z-index: 10; transition: opacity 1s ease; }
-        .main-wrapper { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        .character-img { height: 100vh; width: auto; max-width: 100vw; object-fit: contain; }
-        .dialog-container { position: absolute; top: 76%; left: 50%; transform: translate(-50%, -50%); width: 80%; text-align: center; }
-        .dialog-text { color: #f0e6d2; font-size: 14px; line-height: 1.3; text-shadow: 2px 2px 3px #000; margin-bottom: 15px; font-weight: bold; min-height: 60px; }
-        
-        /* 3. ЭКРАН КАРТЫ */
-        #map-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('map.png') no-repeat center center;
-            background-size: cover;
-            display: none; opacity: 0; transition: opacity 1.5s ease;
-            z-index: 5;
+        /* Элементы диалога */
+        .character-img { height: 70%; position: absolute; bottom: 0; left: 0; }
+        .dialog-box { 
+            width: 100%; background: rgba(0,0,0,0.85); border-top: 3px solid #ffd700; 
+            padding: 20px; color: white; box-sizing: border-box; z-index: 10;
         }
 
-        .buttons-block { display: flex; justify-content: center; gap: 10px; }
+        /* Кнопки */
         .btn-game {
-            padding: 10px 15px; background: linear-gradient(to bottom, #8b0000, #4b0000);
-            border: 1px solid #ffd700; color: white; border-radius: 4px;
-            font-family: 'Kelly Slab', serif; text-transform: uppercase;
-            font-size: 11px; cursor: pointer; display: none;
+            background: #8b0000; color: #ffd700; border: 2px solid #ffd700;
+            padding: 10px 20px; margin: 5px; font-weight: bold; cursor: pointer; border-radius: 5px;
         }
+
+        /* Экран КАРТЫ */
+        #map-screen { width: 100vw; height: 100vh; position: relative; }
+        #game-map { width: 100%; height: 100%; background: #000; }
+
+        .top-bar {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; height: 50px;
+            background: rgba(0,0,0,0.85); border: 2px solid #ffd700; border-radius: 10px;
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 1000;
+        }
+        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div id="percent" class="percent-text">0%</div>
-        <div class="loader-bar"><div id="progress" class="loader-fill"></div></div>
+    <div id="start-screen" class="screen" style="display: flex;">
+        <h1 style="color: #ffd700; text-shadow: 2px 2px #000;">EMPIRE: DAWN</h1>
+        <button class="btn-game" onclick="startGame()">НАЧАТЬ ПУТЬ</button>
     </div>
 
-    <div id="dialog-screen">
-        <div class="main-wrapper">
-            <img src="marshal_blank.png" class="character-img">
-            <div class="dialog-container">
-                <div class="dialog-text" id="typewriter"></div>
-                <div class="buttons-block">
-                    <button class="btn-game" id="btn-next" onclick="startSecondDialogue()">СЛУШАЮ, КАЙ!</button>
-                    <button class="btn-game" id="btn-wood" onclick="goToMap('Лесопилка')">ЛЕСОПИЛКА</button>
-                    <button class="btn-game" id="btn-steel" onclick="goToMap('Кузница')">КУЗНИЦА</button>
-                </div>
+    <div id="dialog-screen" class="screen">
+        <img id="char-image" src="marshal_blank.png" class="character-img">
+        <div class="dialog-box">
+            <h3 id="char-name" style="color: #ffd700; margin-top: 0;">Кай</h3>
+            <p id="dialog-text">Командующий! Мы прибыли. С чего начнем строительство нашей базы?</p>
+            <div id="options">
+                <button class="btn-game" onclick="goToMap('sawmill')">Лесопилка</button>
+                <button class="btn-game" onclick="goToMap('blacksmith')">Кузница</button>
             </div>
         </div>
     </div>
 
-    <div id="map-screen"></div>
+    <div id="map-screen" class="screen">
+        <div class="top-bar">
+            <div class="res">🌲 <span id="wood">500</span></div>
+            <div class="res">⚔️ <span id="steel">200</span></div>
+            <div class="res">💰 <span id="gold">100</span></div>
+        </div>
+        <div id="game-map"></div>
+    </div>
 
     <script>
-        const text1 = "Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Позвольте мне возглавить вашу армию!";
-        const text2 = "Командующий, наши запасы на исходе. С чего начнем восстановление? Нам нужно дерево для строительства или сталь для мечей?";
-        
-        let charIndex = 0;
+        let map;
 
-        function type(message, callback) {
-            const display = document.getElementById("typewriter");
-            display.innerHTML = "";
-            charIndex = 0;
-            function print() {
-                if (charIndex < message.length) {
-                    display.innerHTML += message.charAt(charIndex);
-                    charIndex++;
-                    setTimeout(print, 30);
-                } else if (callback) callback();
-            }
-            print();
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('dialog-screen').style.display = 'flex';
         }
 
-        // Логика загрузки
-        let progress = 0;
-        const loadTimer = setInterval(() => {
-            progress += 5;
-            if (progress >= 100) {
-                clearInterval(loadTimer);
-                document.getElementById('loading-screen').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('dialog-screen').style.display = 'block';
-                    type(text1, () => document.getElementById('btn-next').style.display = 'block');
-                }, 800);
-            }
-            document.getElementById('progress').style.width = progress + '%';
-            document.getElementById('percent').innerText = progress + '%';
-        }, 100);
-
-        function startSecondDialogue() {
-            document.getElementById('btn-next').style.display = 'none';
-            type(text2, () => {
-                document.getElementById('btn-wood').style.display = 'block';
-                document.getElementById('btn-steel').style.display = 'block';
-            });
-        }
-
-        // ПЕРЕХОД НА КАРТУ
         function goToMap(choice) {
-            // Скрываем диалог
             document.getElementById('dialog-screen').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('dialog-screen').style.display = 'none';
-                // Показываем карту
-                const map = document.getElementById('map-screen');
-                map.style.display = 'block';
-                setTimeout(() => { map.style.opacity = '1'; }, 50);
-                
-                alert("Вы выбрали: " + choice + ". Строительство началось рядом с замком!");
-            }, 1000);
+                document.getElementById('map-screen').style.display = 'block';
+                initMap();
+            }, 800);
+        }
+
+        function initMap() {
+            map = L.map('game-map', {
+                crs: L.CRS.Simple,
+                minZoom: -2,
+                maxZoom: 2,
+                zoomControl: false,
+                attributionControl: false
+            });
+
+            const mapImg = new Image();
+            mapImg.src = 'map.png';
+            mapImg.onload = function() {
+                const w = this.width;
+                const h = this.height;
+                const bounds = [[0, 0], [h, w]];
+                L.imageOverlay('map.png', bounds).addTo(map);
+                map.fitBounds(bounds);
+                map.setMaxBounds(bounds);
+            };
+
+            // Система получения координат
+            map.on('click', function(e) {
+                let lat = Math.round(e.latlng.lat);
+                let lng = Math.round(e.latlng.lng);
+                prompt("Координаты точки для здания:", lat + ", " + lng);
+            });
         }
     </script>
 </body>
