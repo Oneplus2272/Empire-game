@@ -8,64 +8,102 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: 'Georgia', serif; }
         
-        /* Экран загрузки */
+        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 100; }
+
+        /* ЭКРАН ЗАГРУЗКИ */
         #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('bg.png') no-repeat center center / cover;
-            z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            background: url('bg.png') no-repeat center center / cover; z-index: 5000;
+            padding: 60px 0; box-sizing: border-box;
         }
 
+        .game-title {
+            color: #ffd700; font-size: 32px; font-weight: bold; text-align: center;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 3px 3px 5px #000;
+            letter-spacing: 4px; text-transform: uppercase;
+        }
+
+        .loader-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 50px; }
+        
+        /* Мощная рамка */
         .loader-container {
-            width: 70%; max-width: 300px; height: 14px;
-            background: rgba(0,0,0,0.6); border: 2px solid #C0C0C0; /* Серебряные края */
-            border-radius: 10px; position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            width: 80%; max-width: 400px; height: 22px;
+            background: #1a1a1a; border: 3px solid #ffd700; 
+            outline: 2px solid #333; border-radius: 4px;
+            position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.9);
         }
 
         .loader-bar {
             width: 0%; height: 100%;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            background: linear-gradient(180deg, #ffec8b 0%, #ffd700 50%, #b8860b 100%);
             position: relative; transition: width 0.1s linear;
         }
 
-        /* Анимация блеска */
         .loader-bar::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: shine 1.5s infinite;
+            content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            animation: shine 2s infinite;
         }
 
-        @keyframes shine {
-            to { left: 150%; }
+        @keyframes shine { to { left: 160%; } }
+        .loading-text { color: #ffd700; margin-top: 15px; font-size: 14px; text-shadow: 1px 1px 2px #000; font-weight: bold; }
+
+        /* ЭКРАН ДИАЛОГА */
+        #dialog-screen { 
+            background: linear-gradient(to bottom, transparent 40%, #000 90%);
+            display: none; flex-direction: column; justify-content: flex-end; align-items: center;
+        }
+        .character-img { height: 80%; position: absolute; bottom: 0; left: 0; z-index: 1; }
+        .dialog-box { 
+            width: 100%; background: rgba(15, 15, 15, 0.95); border-top: 4px solid #ffd700; 
+            padding: 30px 20px; color: white; box-sizing: border-box; z-index: 10;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+        }
+        .btn-game {
+            background: linear-gradient(#8b0000, #4a0000); color: #ffd700; border: 2px solid #ffd700;
+            padding: 12px 25px; margin: 10px 5px; font-weight: bold; border-radius: 3px; cursor: pointer;
+            text-transform: uppercase; font-size: 14px;
         }
 
-        .loading-text { color: #C0C0C0; margin-top: 10px; font-family: serif; font-size: 12px; letter-spacing: 2px; }
-
-        /* Карта на весь экран */
-        #map-screen { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; display: none; }
+        /* КАРТА */
+        #map-screen { z-index: 50; }
         #game-map { width: 100%; height: 100%; background: #000; }
-
         .top-bar {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; height: 40px;
-            background: rgba(0,0,0,0.8); border: 1px solid #ffd700; border-radius: 8px;
+            width: 95%; max-width: 450px; height: 45px;
+            background: rgba(0,0,0,0.85); border: 2px solid #ffd700; border-radius: 5px;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
-        .res { color: #ffd700; font-size: 13px; font-weight: bold; }
+        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div style="color:#ffd700; margin-bottom: 20px; font-size: 24px; text-shadow: 2px 2px #000;">ЗАГРУЗКА ИМПЕРИИ</div>
-        <div class="loader-container">
-            <div id="progress" class="loader-bar"></div>
+    <div id="loading-screen" class="screen" style="display: flex;">
+        <div class="game-title">EMPIRE:<br>DAWN OF WAR</div>
+        <div class="loader-wrapper">
+            <div class="loader-container">
+                <div id="progress" class="loader-bar"></div>
+            </div>
+            <div id="percent-text" class="loading-text">СОЗДАНИЕ МИРА: 0%</div>
         </div>
-        <div id="percent-text" class="loading-text">0%</div>
     </div>
 
-    <div id="map-screen">
+    <div id="dialog-screen" class="screen">
+        <img src="marshal_blank.png" class="character-img">
+        <div class="dialog-box">
+            <h3 style="color: #ffd700; margin: 0 0 10px 0; font-size: 22px;">КАЙ</h3>
+            <p id="dialog-text" style="font-size: 18px; line-height: 1.4;">Командующий, мы закрепились на этой территории. Пора основать наше величие. Какое первое здание прикажете возвести?</p>
+            <div id="options">
+                <button class="btn-game" onclick="startCampaign('sawmill')">ЛЕСОПИЛКА</button>
+                <button class="btn-game" onclick="startCampaign('forge')">КУЗНИЦА</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="map-screen" class="screen">
         <div class="top-bar">
             <div class="res">🌲 <span id="wood">500</span></div>
             <div class="res">⚔️ <span id="steel">200</span></div>
@@ -75,52 +113,42 @@
     </div>
 
     <script>
-        // ЛОГИКА ЗАГРУЗКИ
+        // ЛОГИКА ЗАГРУЗКИ (7 секунд)
         let progress = 0;
-        const interval = setInterval(() => {
+        const loadInterval = setInterval(() => {
             progress += 1;
             document.getElementById('progress').style.width = progress + '%';
-            document.getElementById('percent-text').innerText = progress + '%';
-            
+            document.getElementById('percent-text').innerText = 'ПОДГОТОВКА ВОЙСК: ' + progress + '%';
             if (progress >= 100) {
-                clearInterval(interval);
-                finishLoading();
+                clearInterval(loadInterval);
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('dialog-screen').style.display = 'flex';
             }
-        }, 70); // 70мс * 100 = 7 секунд
+        }, 70);
 
-        function finishLoading() {
-            document.getElementById('loading-screen').style.display = 'none';
+        function startCampaign(building) {
+            document.getElementById('dialog-screen').style.display = 'none';
             document.getElementById('map-screen').style.display = 'block';
             initMap();
         }
 
-        // ЛОГИКА КАРТЫ
         function initMap() {
             const map = L.map('game-map', {
                 crs: L.CRS.Simple,
                 minZoom: -1,
                 maxZoom: 1,
                 zoomControl: false,
-                attributionControl: false,
-                dragging: true,
-                inertia: false // Убирает "дерганье" при отпускании пальца
+                attributionControl: false
             });
 
-            const img = new Image();
-            img.src = 'map.png';
-            img.onload = function() {
-                const w = this.width;
-                const h = this.height;
-                const bounds = [[0, 0], [h, w]];
-                L.imageOverlay('map.png', bounds).addTo(map);
-                map.fitBounds(bounds);
-                map.setMaxBounds(bounds);
-            };
+            const bounds = [[0, 0], [1000, 1000]]; // Примерный размер
+            L.imageOverlay('map.png', bounds).addTo(map);
+            map.fitBounds(bounds);
+            map.setMaxBounds(bounds);
 
-            // Чтобы не выскакивало окно при каждом движении, 
-            // используем контекстное меню или долгое нажатие для координат в будущем
+            // Режим координат (через долгое нажатие)
             map.on('contextmenu', (e) => {
-                alert(Math.round(e.latlng.lat) + ", " + Math.round(e.latlng.lng));
+                prompt("Координаты:", Math.round(e.latlng.lat) + ", " + Math.round(e.latlng.lng));
             });
         }
     </script>
