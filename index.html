@@ -22,7 +22,7 @@
             font-family: 'Arial', sans-serif;
         }
 
-        /* ЗАГРУЗКА 7 СЕКУНД */
+        /* ЗАГРУЗКА */
         #loading-screen {
             position: fixed; 
             inset: 0; 
@@ -66,7 +66,7 @@
             transition: width 0.1s ease;
         }
 
-        /* ДИАЛОГ В РАМКЕ */
+        /* ДИАЛОГ */
         #dialog-screen { 
             position: fixed; 
             inset: 0; 
@@ -112,7 +112,7 @@
             background: #a00000;
         }
 
-        /* ИГРОВОЙ МИР */
+        /* ИГРОВОЙ ЭКРАН - ТЕПЕРЬ КАРТА ЗАНИМАЕТ ВСЁ */
         #game-viewport { 
             width: 100vw; 
             height: 100vh; 
@@ -123,39 +123,116 @@
             touch-action: none;
         }
         
-        /* КАРТА - ДИНАМИЧЕСКИЙ РАЗМЕР */
-        #map-layer {
+        /* КАРТА - ТЕПЕРЬ БОЛЬШОЙ ФОН, КОТОРЫЙ МОЖНО ДВИГАТЬ */
+        #map-container {
             position: absolute;
-            width: 4000px; /* Увеличен размер для масштабирования */
-            height: 4000px;
-            background: url('map.png') no-repeat center center;
-            background-size: cover;
+            top: 0;
+            left: 0;
+            width: 200vw;  /* В 2 раза больше экрана */
+            height: 200vh; /* В 2 раза больше экрана */
+            min-width: 100vw;
+            min-height: 100vh;
             will-change: transform;
             transform-origin: 0 0;
+            background-color: #1a472a; /* Цвет земли на случай если карта не загрузится */
+            overflow: hidden;
+        }
+        
+        /* САМА КАРТА КАК ФОН */
+        .map-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                url('map.png') no-repeat center center,
+                radial-gradient(circle at center, #2d5a3d 0%, #1a472a 70%, #0a291a 100%);
+            background-size: cover;
+            background-blend-mode: overlay;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
+        }
+        
+        /* ДОПОЛНИТЕЛЬНЫЕ СЛОИ КАРТЫ (для глубины) */
+        .map-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        /* ГЕНЕРАЦИЯ ТОЧЕК-ДЕРЕВЬЕВ И Т.Д. */
+        .map-detail {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .tree {
+            background: radial-gradient(circle, #2d5a3d 0%, #1a472a 70%, #0a291a 100%);
+            box-shadow: 0 0 10px rgba(45, 90, 61, 0.5);
+        }
+        
+        .mountain {
+            background: radial-gradient(circle, #5a5a5a 0%, #3a3a3a 70%, #2a2a2a 100%);
+            box-shadow: 0 0 15px rgba(90, 90, 90, 0.6);
+        }
+        
+        .water {
+            background: radial-gradient(circle, #2a5a7a 0%, #1a3a5a 70%, #0a2a4a 100%);
+            box-shadow: 0 0 8px rgba(42, 90, 122, 0.4);
         }
 
         /* ЭФФЕКТ КЛИКА */
         .click-effect {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, rgba(255,215,0,0) 70%);
+            background: radial-gradient(circle, rgba(255,215,0,0.9) 0%, rgba(255,215,0,0.4) 30%, rgba(255,215,0,0) 70%);
             pointer-events: none;
             z-index: 100;
-            animation: clickPulse 0.6s ease-out forwards;
+            animation: clickPulse 0.8s ease-out forwards;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(255,215,0,0.7);
         }
         
         @keyframes clickPulse {
             0% {
-                transform: scale(0.5);
+                transform: translate(-50%, -50%) scale(0.3);
                 opacity: 1;
             }
             100% {
-                transform: scale(2);
+                transform: translate(-50%, -50%) scale(3);
                 opacity: 0;
+            }
+        }
+        
+        /* ВТОРИЧНЫЙ ЭФФЕКТ КЛИКА */
+        .click-ring {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,215,0,0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99;
+            animation: ringPulse 0.6s ease-out forwards;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes ringPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+                border-width: 1px;
             }
         }
 
@@ -167,84 +244,113 @@
             transform: translateX(-50%);
             width: 90%; 
             max-width: 500px;
-            height: 45px; 
-            background: rgba(0,0,0,0.85); 
+            height: 50px; 
+            background: rgba(0,0,0,0.9); 
             border: 2px solid #ffd700;
             display: flex; 
             justify-content: space-around; 
             align-items: center; 
             z-index: 1000; 
-            border-radius: 8px;
-            backdrop-filter: blur(5px);
-            padding: 0 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            padding: 0 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.7);
         }
         .res { 
             color: #ffd700; 
             font-weight: bold; 
             font-family: sans-serif; 
-            font-size: clamp(12px, 3vw, 14px); 
+            font-size: clamp(13px, 3vw, 15px); 
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
         }
 
         /* КНОПКИ УПРАВЛЕНИЯ */
         .controls {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 25px;
+            right: 25px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         
         .control-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(0,0,0,0.7);
+            width: 55px;
+            height: 55px;
+            background: rgba(139,0,0,0.8);
             border: 2px solid #ffd700;
             color: #ffd700;
             border-radius: 50%;
-            font-size: 24px;
+            font-size: 26px;
+            font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
         }
         
-        .control-btn:hover {
-            background: rgba(139,0,0,0.7);
-            transform: scale(1.1);
+        .control-btn:hover, .control-btn:active {
+            background: rgba(160,0,0,1);
+            transform: scale(1.15);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         
-        /* БОКОВАЯ ПАНЕЛЬ */
-        .side-panel {
+        /* ПАНЕЛЬ ИНФОРМАЦИИ */
+        .info-panel {
             position: fixed;
             top: 80px;
-            left: 10px;
-            background: rgba(0,0,0,0.8);
+            left: 15px;
+            background: rgba(0,0,0,0.85);
             border: 2px solid #ffd700;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 10px;
+            padding: 15px;
             z-index: 1000;
             color: white;
-            min-width: 120px;
-            display: none;
+            min-width: 140px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         
-        .side-panel h3 {
+        .info-panel h3 {
             color: #ffd700;
-            margin: 0 0 10px 0;
-            font-size: 14px;
+            margin: 0 0 12px 0;
+            font-size: 16px;
             text-align: center;
+            border-bottom: 1px solid rgba(255,215,0,0.3);
+            padding-bottom: 8px;
         }
         
         .coord-display {
-            font-size: 12px;
-            margin: 5px 0;
-            color: #ccc;
+            font-size: 13px;
+            margin: 8px 0;
+            color: #ddd;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .coord-value {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        /* ИНДИКАТОР ГРАНИЦ (для отладки) */
+        .boundary-indicator {
+            position: fixed;
+            border: 2px dashed rgba(255,215,0,0.3);
+            pointer-events: none;
+            z-index: 500;
+            display: none;
         }
     </style>
 </head>
@@ -262,8 +368,8 @@
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
             <h3 style="color:#ffd700; margin:0 0 10px 0;">МАРШАЛ КАЙ</h3>
-            <p>Мой лорд, карта готова. Мы вернули всё как было, но теперь она слушается ваших команд. Используйте колесо мыши для зума, перетаскивание для перемещения по карте.</p>
-            <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
+            <p>Мой лорд, карта мира готова. Теперь она занимает весь экран! Перетаскивайте для перемещения, используйте жесты для зума.</p>
+            <button class="btn-game" onclick="startGame()">ПРИСТУПИТЬ К ЗАВОЕВАНИЯМ</button>
         </div>
     </div>
 
@@ -272,25 +378,35 @@
             <div class="res">🌲 <span id="wood">500</span></div>
             <div class="res">⚔️ <span id="troops">200</span></div>
             <div class="res">💰 <span id="gold">100</span></div>
+            <div class="res">🏰 <span id="lands">1</span></div>
         </div>
         
-        <div id="map-layer"></div>
+        <div id="map-container">
+            <div class="map-bg"></div>
+            <!-- Детали карты будут сгенерированы скриптом -->
+        </div>
         
         <div class="controls">
-            <button class="control-btn" onclick="zoomIn()">+</button>
-            <button class="control-btn" onclick="zoomOut()">-</button>
-            <button class="control-btn" onclick="resetView()">⌖</button>
+            <button class="control-btn" onclick="zoomIn()" title="Приблизить">+</button>
+            <button class="control-btn" onclick="zoomOut()" title="Отдалить">-</button>
+            <button class="control-btn" onclick="resetView()" title="Сбросить вид">⌖</button>
+            <button class="control-btn" onclick="toggleBoundaries()" title="Показать границы">□</button>
         </div>
         
-        <div class="side-panel" id="info-panel">
-            <h3>Информация</h3>
-            <div class="coord-display">Масштаб: <span id="scale-value">100%</span></div>
-            <div class="coord-display" id="coord-display">X: 0, Y: 0</div>
-            <div style="font-size: 11px; color: #aaa; margin-top: 10px;">
-                Двойной тап для зума<br>
-                Два пальца для зума
+        <div class="info-panel" id="infoPanel">
+            <h3>КАРТА МИРА</h3>
+            <div class="coord-display">Масштаб: <span class="coord-value" id="scaleValue">100%</span></div>
+            <div class="coord-display">Координаты: <span class="coord-value" id="coordValue">0,0</span></div>
+            <div class="coord-display">Область: <span class="coord-value" id="areaValue">Центр</span></div>
+            <div style="font-size: 11px; color: #aaa; margin-top: 12px; line-height: 1.4; border-top: 1px solid rgba(255,215,0,0.2); padding-top: 8px;">
+                🖱️ Клик - выбрать<br>
+                🖱️ Перетащить - двигать<br>
+                🔍 Колесо - зум<br>
+                📱 2 пальца - зум
             </div>
         </div>
+        
+        <div class="boundary-indicator" id="boundaryIndicator"></div>
     </div>
 
     <script>
@@ -302,8 +418,10 @@
             document.getElementById('percent').innerText = p + '%';
             if(p >= 100) {
                 clearInterval(itv);
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('dialog-screen').style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('dialog-screen').style.display = 'flex';
+                }, 500);
             }
         }, 70);
 
@@ -315,106 +433,242 @@
             mapEngine = initEngine();
         }
 
-        // 2. УЛУЧШЕННЫЙ ДВИЖОК КАРТЫ
+        // 2. ДВИЖОК ПОЛНОЭКРАННОЙ КАРТЫ
         function initEngine() {
-            const map = document.getElementById('map-layer');
+            const container = document.getElementById('map-container');
             const viewport = document.getElementById('game-viewport');
-            const infoPanel = document.getElementById('info-panel');
-            const scaleValue = document.getElementById('scale-value');
-            const coordDisplay = document.getElementById('coord-display');
+            const infoPanel = document.getElementById('infoPanel');
+            const scaleValue = document.getElementById('scaleValue');
+            const coordValue = document.getElementById('coordValue');
+            const areaValue = document.getElementById('areaValue');
+            const boundaryIndicator = document.getElementById('boundaryIndicator');
             
             let scale = 1;
-            let pos = { x: -window.innerWidth/2, y: -window.innerHeight/2 };
+            let pos = { x: 0, y: 0 };
             let isDragging = false;
             let startDrag = { x: 0, y: 0 };
             let lastDist = 0;
             let lastTap = 0;
             let lastTapX = 0;
             let lastTapY = 0;
+            let showBoundaries = false;
 
-            // Автоподстройка под размер экрана
+            // Автоподстройка под размер экрана - КАРТА ЗАНИМАЕТ ВСЁ!
             function adjustMapSize() {
-                const aspectRatio = 4000/4000; // Соотношение сторон карты
-                const screenAspect = window.innerWidth / window.innerHeight;
+                // Устанавливаем размер контейнера минимум в 2 раза больше экрана
+                const containerWidth = Math.max(window.innerWidth * 2, 2000);
+                const containerHeight = Math.max(window.innerHeight * 2, 2000);
                 
-                if (screenAspect > aspectRatio) {
-                    // Широкий экран
-                    scale = window.innerHeight / 4000 * 1.2;
-                } else {
-                    // Высокий экран
-                    scale = window.innerWidth / 4000 * 1.2;
-                }
+                container.style.width = `${containerWidth}px`;
+                container.style.height = `${containerHeight}px`;
                 
-                pos.x = -window.innerWidth/2;
-                pos.y = -window.innerHeight/2;
+                // Начальная позиция - по центру
+                pos.x = (window.innerWidth - containerWidth) / 2;
+                pos.y = (window.innerHeight - containerHeight) / 2;
+                
+                // Начальный масштаб - чтобы карта заполнила экран по меньшей стороне
+                const minDimension = Math.min(window.innerWidth, window.innerHeight);
+                const containerMin = Math.min(containerWidth, containerHeight);
+                scale = minDimension / containerMin * 0.9;
                 
                 update();
+                generateMapDetails();
+                
+                // Показываем информацию
+                infoPanel.style.display = 'block';
+                setTimeout(() => {
+                    infoPanel.style.display = 'none';
+                }, 5000);
+            }
+
+            // Генерация деталей карты (деревья, горы и т.д.)
+            function generateMapDetails() {
+                const container = document.getElementById('map-container');
+                
+                // Очищаем старые детали
+                const oldDetails = container.querySelectorAll('.map-layer');
+                oldDetails.forEach(el => el.remove());
+                
+                // Создаем слой для деталей
+                const detailsLayer = document.createElement('div');
+                detailsLayer.className = 'map-layer';
+                container.appendChild(detailsLayer);
+                
+                // Генерируем случайные объекты
+                const detailCount = 150; // Количество деталей
+                
+                for(let i = 0; i < detailCount; i++) {
+                    const detail = document.createElement('div');
+                    detail.className = 'map-detail';
+                    
+                    // Случайная позиция
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    
+                    // Случайный размер
+                    const size = 20 + Math.random() * 60;
+                    
+                    // Случайный тип
+                    const type = Math.random();
+                    let className = 'tree';
+                    let zIndex = 1;
+                    
+                    if(type < 0.3) {
+                        className = 'mountain';
+                        zIndex = 2;
+                    } else if(type < 0.5) {
+                        className = 'water';
+                        zIndex = 0;
+                    }
+                    
+                    detail.classList.add(className);
+                    detail.style.left = `${left}%`;
+                    detail.style.top = `${top}%`;
+                    detail.style.width = `${size}px`;
+                    detail.style.height = `${size}px`;
+                    detail.style.zIndex = zIndex;
+                    
+                    detailsLayer.appendChild(detail);
+                }
             }
 
             function update() {
-                map.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
-                scaleValue.textContent = `${Math.round(scale * 100)}%`;
-                coordDisplay.textContent = `X: ${Math.round(-pos.x)}, Y: ${Math.round(-pos.y)}`;
+                // Применяем трансформации к контейнеру карты
+                container.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
                 
-                // Проверка границ карты
+                // Обновляем информацию
+                scaleValue.textContent = `${Math.round(scale * 100)}%`;
+                coordValue.textContent = `${Math.round(-pos.x)}, ${Math.round(-pos.y)}`;
+                
+                // Определяем область на карте
+                updateAreaName();
+                
+                // Проверка и ограничение границ
                 const bounds = getMapBounds();
-                if (pos.x > bounds.maxX) pos.x = bounds.maxX;
-                if (pos.x < bounds.minX) pos.x = bounds.minX;
-                if (pos.y > bounds.maxY) pos.y = bounds.maxY;
-                if (pos.y < bounds.minY) pos.y = bounds.minY;
+                constrainToBounds(bounds);
+                
+                // Обновляем индикатор границ если нужно
+                if(showBoundaries) {
+                    updateBoundaryIndicator(bounds);
+                }
             }
 
             function getMapBounds() {
-                const mapWidth = 4000 * scale;
-                const mapHeight = 4000 * scale;
+                const containerRect = container.getBoundingClientRect();
+                const scaledWidth = containerRect.width * scale;
+                const scaledHeight = containerRect.height * scale;
                 
                 return {
-                    minX: -mapWidth + window.innerWidth * 0.8,
-                    maxX: -window.innerWidth * 0.2,
-                    minY: -mapHeight + window.innerHeight * 0.8,
-                    maxY: -window.innerHeight * 0.2
+                    minX: window.innerWidth - scaledWidth,
+                    maxX: 0,
+                    minY: window.innerHeight - scaledHeight,
+                    maxY: 0,
+                    width: scaledWidth,
+                    height: scaledHeight
                 };
+            }
+
+            function constrainToBounds(bounds) {
+                if(pos.x < bounds.minX) pos.x = bounds.minX;
+                if(pos.x > bounds.maxX) pos.x = bounds.maxX;
+                if(pos.y < bounds.minY) pos.y = bounds.minY;
+                if(pos.y > bounds.maxY) pos.y = bounds.maxY;
+            }
+
+            function updateBoundaryIndicator(bounds) {
+                boundaryIndicator.style.display = 'block';
+                boundaryIndicator.style.left = `${bounds.minX}px`;
+                boundaryIndicator.style.top = `${bounds.minY}px`;
+                boundaryIndicator.style.width = `${bounds.width}px`;
+                boundaryIndicator.style.height = `${bounds.height}px`;
+            }
+
+            function toggleBoundaries() {
+                showBoundaries = !showBoundaries;
+                boundaryIndicator.style.display = showBoundaries ? 'block' : 'none';
+                if(showBoundaries) {
+                    updateBoundaryIndicator(getMapBounds());
+                }
+            }
+
+            function updateAreaName() {
+                const centerX = -pos.x + window.innerWidth / 2 / scale;
+                const centerY = -pos.y + window.innerHeight / 2 / scale;
+                const containerWidth = parseInt(container.style.width);
+                const containerHeight = parseInt(container.style.height);
+                
+                const percentX = centerX / containerWidth * 100;
+                const percentY = centerY / containerHeight * 100;
+                
+                let area = "Центр";
+                
+                if(percentX < 25) area = "Запад";
+                else if(percentX > 75) area = "Восток";
+                
+                if(percentY < 25) area = (area === "Центр" ? "Север" : area + "-Север");
+                else if(percentY > 75) area = (area === "Центр" ? "Юг" : area + "-Юг");
+                
+                areaValue.textContent = area;
             }
 
             // Создание эффекта клика
             function createClickEffect(x, y) {
+                // Главный эффект
                 const effect = document.createElement('div');
                 effect.className = 'click-effect';
-                effect.style.left = `${x - 20}px`;
-                effect.style.top = `${y - 20}px`;
-                document.getElementById('game-viewport').appendChild(effect);
+                effect.style.left = `${x}px`;
+                effect.style.top = `${y}px`;
+                viewport.appendChild(effect);
                 
+                // Вторичное кольцо
+                const ring = document.createElement('div');
+                ring.className = 'click-ring';
+                ring.style.left = `${x}px`;
+                ring.style.top = `${y}px`;
+                viewport.appendChild(ring);
+                
+                // Удаляем через время
                 setTimeout(() => {
                     effect.remove();
-                }, 600);
+                    ring.remove();
+                }, 800);
+                
+                // Логика клика (можно добавить взаимодействие с игрой)
+                const containerRect = container.getBoundingClientRect();
+                const mapX = (x - containerRect.left - pos.x) / scale;
+                const mapY = (y - containerRect.top - pos.y) / scale;
+                
+                console.log('Клик на карте:', { mapX: Math.round(mapX), mapY: Math.round(mapY) });
+                
+                // Показываем панель информации
+                infoPanel.style.display = 'block';
+                setTimeout(() => {
+                    if(!isDragging) infoPanel.style.display = 'none';
+                }, 3000);
             }
 
+            // ОБРАБОТЧИКИ СОБЫТИЙ
             const onStart = (e) => {
                 e.preventDefault();
                 
                 if (e.touches) {
                     if (e.touches.length === 1) {
-                        // Одинарное нажатие
+                        // Одинарный тап
                         const now = Date.now();
                         const t = e.touches[0];
                         const tapX = t.clientX;
                         const tapY = t.clientY;
                         
                         if (now - lastTap < 300 && 
-                            Math.abs(tapX - lastTapX) < 20 && 
-                            Math.abs(tapY - lastTapY) < 20) {
-                            // Двойной тап
-                            const targetScale = scale * 1.5;
-                            scale = Math.min(1.5, Math.max(0.3, targetScale));
+                            Math.abs(tapX - lastTapX) < 25 && 
+                            Math.abs(tapY - lastTapY) < 25) {
+                            // Двойной тап - зум к точке
+                            const targetScale = scale * 1.8;
+                            scale = Math.min(3, Math.max(0.2, targetScale));
                             
-                            // Смещение к точке тапа
-                            const rect = viewport.getBoundingClientRect();
-                            const relativeX = (tapX - rect.left) / rect.width;
-                            const relativeY = (tapY - rect.top) / rect.height;
-                            
-                            const mapRect = getMapBounds();
-                            pos.x = -relativeX * (4000 * scale) + tapX;
-                            pos.y = -relativeY * (4000 * scale) + tapY;
+                            // Центрируем на точке тапа
+                            pos.x = tapX - (tapX - pos.x) * (scale / targetScale * 1.8);
+                            pos.y = tapY - (tapY - pos.y) * (scale / targetScale * 1.8);
                             
                             createClickEffect(tapX, tapY);
                         }
@@ -426,12 +680,14 @@
                         isDragging = true;
                         startDrag.x = t.clientX - pos.x;
                         startDrag.y = t.clientY - pos.y;
+                        viewport.style.cursor = 'grabbing';
                     } else if (e.touches.length === 2) {
                         // Два пальца - зум
                         lastDist = Math.hypot(
                             e.touches[0].clientX - e.touches[1].clientX,
                             e.touches[0].clientY - e.touches[1].clientY
                         );
+                        isDragging = true;
                     }
                 } else {
                     // Мышь
@@ -440,8 +696,6 @@
                     startDrag.y = e.clientY - pos.y;
                     viewport.style.cursor = 'grabbing';
                 }
-                
-                infoPanel.style.display = 'block';
             };
 
             const onMove = (e) => {
@@ -458,21 +712,20 @@
                         );
                         
                         const delta = dist / lastDist;
-                        const newScale = Math.max(0.3, Math.min(1.5, scale * delta));
+                        const newScale = Math.max(0.2, Math.min(3, scale * delta));
                         
-                        // Центр зума между пальцами
+                        // Центр между пальцами
                         const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                         const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                         
-                        // Корректировка позиции при зуме
-                        const scaleRatio = newScale / scale;
-                        pos.x = centerX - (centerX - pos.x) * scaleRatio;
-                        pos.y = centerY - (centerY - pos.y) * scaleRatio;
+                        // Корректируем позицию при зуме
+                        pos.x = centerX - (centerX - pos.x) * (newScale / scale);
+                        pos.y = centerY - (centerY - pos.y) * (newScale / scale);
                         
                         scale = newScale;
                         lastDist = dist;
                     } else if (e.touches.length === 1) {
-                        // Перемещение одним пальцем
+                        // Перемещение
                         const t = e.touches[0];
                         pos.x = t.clientX - startDrag.x;
                         pos.y = t.clientY - startDrag.y;
@@ -489,29 +742,12 @@
             const onEnd = () => {
                 isDragging = false;
                 viewport.style.cursor = 'grab';
-                
-                // Скрываем панель через 3 секунды
-                setTimeout(() => {
-                    if (!isDragging) {
-                        infoPanel.style.display = 'none';
-                    }
-                }, 3000);
             };
 
-            // Обработка клика по карте
+            // Клик по карте
             const onClick = (e) => {
-                if (e.touches) return; // Для тач-устройств отдельная логика
-                
+                if (e.touches) return; // Для тача отдельная обработка
                 createClickEffect(e.clientX, e.clientY);
-                
-                // Можно добавить логику обработки клика
-                // Например, выбор юнита или постройки
-                console.log('Клик по координатам:', {
-                    screenX: e.clientX,
-                    screenY: e.clientY,
-                    mapX: Math.round((-pos.x + e.clientX) / scale),
-                    mapY: Math.round((-pos.y + e.clientY) / scale)
-                });
             };
 
             // Зум колесом мыши
@@ -519,25 +755,24 @@
                 e.preventDefault();
                 
                 const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                const newScale = Math.max(0.3, Math.min(1.5, scale * delta));
+                const newScale = Math.max(0.2, Math.min(3, scale * delta));
                 
-                // Центр зума - позиция мыши
-                const rect = viewport.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
+                // Центр зума - курсор мыши
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
                 
-                // Корректировка позиции при зуме
-                const scaleRatio = newScale / scale;
-                pos.x = mouseX - (mouseX - pos.x) * scaleRatio;
-                pos.y = mouseY - (mouseY - pos.y) * scaleRatio;
+                // Корректируем позицию
+                pos.x = mouseX - (mouseX - pos.x) * (newScale / scale);
+                pos.y = mouseY - (mouseY - pos.y) * (newScale / scale);
                 
                 scale = newScale;
                 update();
                 
+                // Показываем панель
                 infoPanel.style.display = 'block';
             };
 
-            // Привязка событий
+            // ПРИВЯЗКА СОБЫТИЙ
             viewport.addEventListener('mousedown', onStart);
             document.addEventListener('mousemove', onMove);
             document.addEventListener('mouseup', onEnd);
@@ -549,31 +784,44 @@
             viewport.addEventListener('touchend', onEnd);
             viewport.addEventListener('touchcancel', onEnd);
 
-            // Обработка ресайза окна
+            // Ресайз окна
             window.addEventListener('resize', adjustMapSize);
             
-            // Инициализация
+            // ИНИЦИАЛИЗАЦИЯ
             adjustMapSize();
             
-            // Возвращаем API для внешнего управления
+            // Возвращаем API
             return {
                 zoomIn: () => {
-                    scale = Math.min(1.5, scale * 1.2);
+                    const newScale = Math.min(3, scale * 1.3);
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    
+                    pos.x = centerX - (centerX - pos.x) * (newScale / scale);
+                    pos.y = centerY - (centerY - pos.y) * (newScale / scale);
+                    
+                    scale = newScale;
                     update();
                 },
                 zoomOut: () => {
-                    scale = Math.max(0.3, scale * 0.8);
+                    const newScale = Math.max(0.2, scale * 0.7);
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    
+                    pos.x = centerX - (centerX - pos.x) * (newScale / scale);
+                    pos.y = centerY - (centerY - pos.y) * (newScale / scale);
+                    
+                    scale = newScale;
                     update();
                 },
                 resetView: () => {
                     adjustMapSize();
                 },
-                getScale: () => scale,
-                getPosition: () => ({...pos})
+                toggleBoundaries: toggleBoundaries
             };
         }
 
-        // Функции управления
+        // Глобальные функции управления
         function zoomIn() {
             if (mapEngine) mapEngine.zoomIn();
         }
@@ -585,9 +833,16 @@
         function resetView() {
             if (mapEngine) mapEngine.resetView();
         }
+        
+        function toggleBoundaries() {
+            if (mapEngine) mapEngine.toggleBoundaries();
+        }
 
         // Предотвращаем контекстное меню
         document.addEventListener('contextmenu', e => e.preventDefault());
+        
+        // Предотвращаем выделение текста при драге
+        document.addEventListener('selectstart', e => e.preventDefault());
     </script>
 </body>
 </html>
