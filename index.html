@@ -6,58 +6,53 @@
     <title>Empire: Dawn of War</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: 'Georgia', serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: 'serif'; }
 
-        /* ЭКРАН ЗАГРУЗКИ */
+        /* ЗАГРУЗКА */
         #loading-screen {
             position: fixed; inset: 0; background: url('bg.png') no-repeat center center / cover;
             display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             z-index: 5000; padding: 60px 0;
         }
         .game-title { 
-            color: #ffd700; font-size: clamp(24px, 8vw, 36px); font-weight: bold; text-align: center; 
-            text-shadow: 0 0 15px #000, 2px 2px 0px #8b0000; text-transform: uppercase; letter-spacing: 4px;
+            color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; 
+            text-shadow: 0 0 15px #000; text-transform: uppercase; letter-spacing: 4px;
         }
-        .loader-wrap { width: 85%; max-width: 450px; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
-        .loader-cont { 
-            width: 100%; height: 28px; background: #000; border: 4px solid #ffd700; 
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); position: relative; 
-        }
-        #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); transition: 0.1s linear; }
+        .loader-wrap { width: 85%; max-width: 400px; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
+        .loader-cont { width: 100%; height: 26px; background: #000; border: 4px solid #ffd700; position: relative; }
+        #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
 
-        /* ЭКРАН ДИАЛОГА */
+        /* ДИАЛОГ */
         #dialog-screen { 
             position: fixed; inset: 0; z-index: 4000; display: none;
-            background: linear-gradient(to bottom, transparent 10%, #000 80%);
+            background: linear-gradient(to bottom, transparent 20%, #000 90%);
             flex-direction: column; justify-content: flex-end; align-items: center;
         }
-        .character-img { height: 75%; position: absolute; bottom: 0; left: 0; z-index: 1; filter: drop-shadow(0 0 20px #000); }
+        .character-img { height: 70%; position: absolute; bottom: 0; left: 0; z-index: 1; filter: drop-shadow(0 0 20px #000); }
         .dialog-box { 
-            width: 100%; background: rgba(15, 15, 15, 0.98); border-top: 5px solid #ffd700; 
-            padding: 35px 25px; color: white; box-sizing: border-box; z-index: 10;
+            width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; 
+            padding: 30px 20px; color: white; box-sizing: border-box; z-index: 10;
         }
         .btn-game {
-            background: linear-gradient(#900, #500); color: #ffd700; border: 2px solid #ffd700;
-            padding: 18px; width: 100%; margin-top: 15px; font-weight: bold; font-size: 18px; 
-            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+            background: #8b0000; color: #ffd700; border: 2px solid #ffd700;
+            padding: 16px; width: 100%; margin-top: 15px; font-weight: bold; font-size: 16px; 
         }
 
-        /* ИГРОВОЙ МИР */
-        #game-viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; display: none; background: #000; }
-        #map-layer {
-            position: absolute; width: 3000px; height: 3000px; /* Размер игрового поля */
-            background: url('map.png') no-repeat center center;
-            background-size: 100% 100%; transform-origin: center; will-change: transform;
+        /* КАРТА - НОВЫЙ ДВИЖОК */
+        #game-viewport { 
+            width: 100vw; height: 100vh; position: relative; display: none; overflow: hidden;
+            background-image: url('map.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 150%; /* Начальный масштаб */
         }
 
-        /* ИНТЕРФЕЙС ПОВЕРХ КАРТЫ */
         .ui-panel {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            width: 95%; max-width: 500px; height: 50px;
-            background: rgba(0,0,0,0.85); border: 2px solid #ffd700; border-radius: 6px;
+            width: 90%; height: 45px; background: rgba(0,0,0,0.8); border: 2px solid #ffd700;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
-        .res { color: #ffd700; font-weight: bold; font-size: 15px; text-shadow: 1px 1px #000; }
+        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -66,16 +61,16 @@
         <div class="game-title">EMPIRE:<br>DAWN OF WAR</div>
         <div class="loader-wrap">
             <div class="loader-cont"><div id="progress"></div></div>
-            <div id="percent" style="color:#ffd700; margin-top:12px; font-weight:bold; font-size:18px;">0%</div>
+            <div id="percent" style="color:#ffd700; margin-top:10px; font-weight:bold;">0%</div>
         </div>
     </div>
 
     <div id="dialog-screen">
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
-            <h3 style="color: #ffd700; margin: 0 0 10px 0; font-size: 22px;">МАРШАЛ КАЙ</h3>
-            <p style="font-size: 17px; line-height: 1.5; margin: 0;">Мой лорд, карта земель готова. Нам нужно основать столицу и начать сбор ресурсов. Прикажете разбить лагерь?</p>
-            <button class="btn-game" onclick="enterGame()">ВСТУПИТЬ В ПРАВА</button>
+            <h3 style="color:#ffd700; margin:0 0 10px 0;">МАРШАЛ КАЙ</h3>
+            <p>Мой лорд, карта земель готова. Пора вступить в права!</p>
+            <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
 
@@ -85,109 +80,88 @@
             <div class="res">⚔️ 200</div>
             <div class="res">💰 100</div>
         </div>
-        <div id="map-layer"></div>
     </div>
 
     <script>
-        // --- 1. ПРЕДЗАГРУЗКА И ШКАЛА ---
-        const images = ['map.png', 'bg.png', 'marshal_blank.png'];
-        let loaded = 0;
-        images.forEach(src => {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => loaded++;
-        });
-
-        let progress = 0;
-        const loadTimer = setInterval(() => {
-            progress += 1;
-            document.getElementById('progress').style.width = progress + '%';
-            document.getElementById('percent').innerText = progress + '%';
-
-            if (progress >= 100) {
-                clearInterval(loadTimer);
+        // ЗАГРУЗКА
+        let p = 0;
+        let itv = setInterval(() => {
+            p++;
+            document.getElementById('progress').style.width = p+'%';
+            document.getElementById('percent').innerText = p+'%';
+            if(p >= 100) {
+                clearInterval(itv);
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('dialog-screen').style.display = 'flex';
             }
-        }, 70); // 70мс * 100 = 7 секунд
+        }, 70);
 
-        // --- 2. ПЕРЕХОД К КАРТЕ ---
-        function enterGame() {
+        function startGame() {
             document.getElementById('dialog-screen').style.display = 'none';
             document.getElementById('game-viewport').style.display = 'block';
-            initWorld();
+            initMapEngine();
         }
 
-        // --- 3. ДВИЖОК КАРТЫ (Drag & Zoom) ---
-        function initWorld() {
-            const map = document.getElementById('map-layer');
-            let scale = 0.8; // Начальный зум
-            let posX = 0, posY = 0;
-            let lastX, lastY, startDist = 0;
+        // НОВЫЙ ДВИЖОК ПЕРЕМЕЩЕНИЯ (БЕЗ ТРЯСКИ)
+        function initMapEngine() {
+            const view = document.getElementById('game-viewport');
+            let scale = 150; 
+            let posX = 50, posY = 50; 
             let isDragging = false;
+            let startX, startY, startDist;
 
-            function applyTransform() {
-                // Ограничения, чтобы не вылезать за края (базовые)
-                const vw = window.innerWidth;
-                const vh = window.innerHeight;
-                const limitX = (map.offsetWidth * scale - vw) / 2;
-                const limitY = (map.offsetHeight * scale - vh) / 2;
-
-                if (posX > limitX) posX = limitX;
-                if (posX < -limitX) posX = -limitX;
-                if (posY > limitY) posY = limitY;
-                if (posY < -limitY) posY = -limitY;
-
-                map.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-            }
-
-            // Управление
-            const handleStart = (e) => {
-                if (e.touches && e.touches.length === 2) {
-                    startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                } else {
+            view.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) {
                     isDragging = true;
-                    const t = e.touches ? e.touches[0] : e;
-                    lastX = t.clientX; lastY = t.clientY;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 }
-            };
+            });
 
-            const handleMove = (e) => {
-                if (e.touches && e.touches.length === 2) {
-                    // ЗУМ
-                    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    const delta = dist / startDist;
-                    scale = Math.min(Math.max(0.4, scale * delta), 1.5);
+            view.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (isDragging && e.touches.length === 1) {
+                    let dx = (e.touches[0].clientX - startX) / window.innerWidth * 100;
+                    let dy = (e.touches[0].clientY - startY) / window.innerHeight * 100;
+                    posX += dx;
+                    posY += dy;
+                    // Ограничения
+                    posX = Math.max(0, Math.min(100, posX));
+                    posY = Math.max(0, Math.min(100, posY));
+                    
+                    view.style.backgroundPosition = `${posX}% ${posY}%`;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    let delta = dist / startDist;
+                    scale = Math.max(100, Math.min(300, scale * delta));
+                    view.style.backgroundSize = `${scale}%`;
                     startDist = dist;
-                    applyTransform();
-                } else if (isDragging) {
-                    // СДВИГ
-                    const t = e.touches ? e.touches[0] : e;
-                    posX += t.clientX - lastX;
-                    posY += t.clientY - lastY;
-                    lastX = t.clientX; lastY = t.clientY;
-                    applyTransform();
                 }
-            };
-
-            const handleEnd = () => { isDragging = false; };
-
-            // Колесико мыши
-            window.addEventListener('wheel', (e) => {
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                scale = Math.min(Math.max(0.4, scale * delta), 1.5);
-                applyTransform();
             }, { passive: false });
 
-            // Регистрация событий
-            window.addEventListener('mousedown', handleStart);
-            window.addEventListener('mousemove', handleMove);
-            window.addEventListener('mouseup', handleEnd);
-            window.addEventListener('touchstart', handleStart);
-            window.addEventListener('touchmove', handleMove, { passive: false });
-            window.addEventListener('touchend', handleEnd);
-
-            applyTransform(); // Начальная отрисовка
+            view.addEventListener('touchend', () => { isDragging = false; });
+            
+            // Поддержка мыши
+            view.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX; startY = e.clientY; });
+            window.addEventListener('mousemove', e => {
+                if (!isDragging) return;
+                let dx = (e.clientX - startX) / window.innerWidth * 100;
+                let dy = (e.clientY - startY) / window.innerHeight * 100;
+                posX += dx; posY += dy;
+                posX = Math.max(0, Math.min(100, posX));
+                posY = Math.max(0, Math.min(100, posY));
+                view.style.backgroundPosition = `${posX}% ${posY}%`;
+                startX = e.clientX; startY = e.clientY;
+            });
+            window.addEventListener('mouseup', () => isDragging = false);
+            window.addEventListener('wheel', e => {
+                scale = Math.max(100, Math.min(300, scale + (e.deltaY < 0 ? 10 : -10)));
+                view.style.backgroundSize = `${scale}%`;
+            });
         }
     </script>
 </body>
