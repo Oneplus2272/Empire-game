@@ -12,6 +12,7 @@
             font-family: 'Kelly Slab', serif;
         }
 
+        /* 1. ЗАГРУЗОЧНЫЙ ЭКРАН */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #1a1a1a url('bg.png') no-repeat center center; 
@@ -24,28 +25,23 @@
         .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); transition: width 0.2s; }
         .percent-text { color: #ffd700; margin-bottom: 10px; font-size: 20px; text-shadow: 2px 2px 4px #000; }
 
-        #game-screen { position: relative; width: 100vw; height: 100vh; display: none; background: #000; }
-
-        .main-wrapper {
-            position: relative; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-        }
-
+        /* 2. ЭКРАН ДИАЛОГА (КАЙ) */
+        #dialog-screen { position: relative; width: 100vw; height: 100vh; display: none; background: #000; z-index: 10; transition: opacity 1s ease; }
+        .main-wrapper { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         .character-img { height: 100vh; width: auto; max-width: 100vw; object-fit: contain; }
-
-        .dialog-container {
-            position: absolute; top: 76%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; text-align: center; z-index: 10;
-        }
-
-        .dialog-text {
-            color: #f0e6d2; font-size: 14px; line-height: 1.3;
-            text-shadow: 2px 2px 3px #000; margin-bottom: 15px;
-            font-weight: bold; min-height: 60px;
+        .dialog-container { position: absolute; top: 76%; left: 50%; transform: translate(-50%, -50%); width: 80%; text-align: center; }
+        .dialog-text { color: #f0e6d2; font-size: 14px; line-height: 1.3; text-shadow: 2px 2px 3px #000; margin-bottom: 15px; font-weight: bold; min-height: 60px; }
+        
+        /* 3. ЭКРАН КАРТЫ */
+        #map-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('map.png') no-repeat center center;
+            background-size: cover;
+            display: none; opacity: 0; transition: opacity 1.5s ease;
+            z-index: 5;
         }
 
         .buttons-block { display: flex; justify-content: center; gap: 10px; }
-
         .btn-game {
             padding: 10px 15px; background: linear-gradient(to bottom, #8b0000, #4b0000);
             border: 1px solid #ffd700; color: white; border-radius: 4px;
@@ -61,19 +57,21 @@
         <div class="loader-bar"><div id="progress" class="loader-fill"></div></div>
     </div>
 
-    <div id="game-screen">
+    <div id="dialog-screen">
         <div class="main-wrapper">
             <img src="marshal_blank.png" class="character-img">
             <div class="dialog-container">
                 <div class="dialog-text" id="typewriter"></div>
                 <div class="buttons-block">
                     <button class="btn-game" id="btn-next" onclick="startSecondDialogue()">СЛУШАЮ, КАЙ!</button>
-                    <button class="btn-game" id="btn-wood" onclick="finalChoice('Лесопилку')">ЛЕСОПИЛКА</button>
-                    <button class="btn-game" id="btn-steel" onclick="finalChoice('Кузницу')">КУЗНИЦА</button>
+                    <button class="btn-game" id="btn-wood" onclick="goToMap('Лесопилка')">ЛЕСОПИЛКА</button>
+                    <button class="btn-game" id="btn-steel" onclick="goToMap('Кузница')">КУЗНИЦА</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="map-screen"></div>
 
     <script>
         const text1 = "Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Позвольте мне возглавить вашу армию!";
@@ -81,20 +79,16 @@
         
         let charIndex = 0;
 
-        // Функция печати текста
         function type(message, callback) {
             const display = document.getElementById("typewriter");
             display.innerHTML = "";
             charIndex = 0;
-            
             function print() {
                 if (charIndex < message.length) {
                     display.innerHTML += message.charAt(charIndex);
                     charIndex++;
                     setTimeout(print, 30);
-                } else {
-                    if (callback) callback();
-                }
+                } else if (callback) callback();
             }
             print();
         }
@@ -103,26 +97,19 @@
         let progress = 0;
         const loadTimer = setInterval(() => {
             progress += 5;
-            if (progress > 100) progress = 100;
+            if (progress >= 100) {
+                clearInterval(loadTimer);
+                document.getElementById('loading-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('dialog-screen').style.display = 'block';
+                    type(text1, () => document.getElementById('btn-next').style.display = 'block');
+                }, 800);
+            }
             document.getElementById('progress').style.width = progress + '%';
             document.getElementById('percent').innerText = progress + '%';
-            
-            if (progress === 100) {
-                clearInterval(loadTimer);
-                setTimeout(() => {
-                    document.getElementById('loading-screen').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('loading-screen').style.display = 'none';
-                        document.getElementById('game-screen').style.display = 'block';
-                        type(text1, () => {
-                            document.getElementById('btn-next').style.display = 'block';
-                        });
-                    }, 800);
-                }, 500);
-            }
         }, 100);
 
-        // Переход ко второму вопросу
         function startSecondDialogue() {
             document.getElementById('btn-next').style.display = 'none';
             type(text2, () => {
@@ -131,9 +118,19 @@
             });
         }
 
-        // Финальный выбор (пока что просто алерт)
-        function finalChoice(name) {
-            alert("Приказ принят! Начинаем строить " + name);
+        // ПЕРЕХОД НА КАРТУ
+        function goToMap(choice) {
+            // Скрываем диалог
+            document.getElementById('dialog-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('dialog-screen').style.display = 'none';
+                // Показываем карту
+                const map = document.getElementById('map-screen');
+                map.style.display = 'block';
+                setTimeout(() => { map.style.opacity = '1'; }, 50);
+                
+                alert("Вы выбрали: " + choice + ". Строительство началось рядом с замком!");
+            }, 1000);
         }
     </script>
 </body>
