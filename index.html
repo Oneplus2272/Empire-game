@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Empire Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kelly+Slab&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            font-family: 'Kelly+Slab', serif;
+        }
+
+        /* ЭКРАН ЗАГРУЗКИ */
+        #loading-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('bg.jpg') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.8s ease;
+        }
+
+        .loader-bar {
+            width: 70%; height: 8px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #ffd700;
+            margin-bottom: 60px;
+            border-radius: 10px;
+        }
+
+        .loader-fill {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+        }
+
+        .percent-text {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        /* ИГРОВОЙ ЭКРАН */
+        #game-screen {
+            position: relative;
+            width: 100vw; height: 100vh;
+            display: none;
+            background: #000;
+        }
+
+        /* ОПУСКАЕМ ВСЁ ВНИЗ */
+        .main-wrapper {
+            position: absolute;
+            bottom: 0; /* Прижимаем к самому низу */
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Контент падает вниз */
+            align-items: center;
+        }
+
+        .character-img {
+            width: 100%;
+            max-height: 90vh; /* Чтобы не вылезало за экран сверху */
+            object-fit: contain;
+            display: block;
+        }
+
+        /* ПОЗИЦИЯ ТЕКСТА ВНУТРИ РАМКИ КАРТИНКИ */
+        .dialog-container {
+            position: absolute;
+            bottom: 10%; /* Регулируй этот процент (8-12%), чтобы текст сел ровно в рамку */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .dialog-text {
+            color: #f0e6d2;
+            font-size: 15px;
+            line-height: 1.2;
+            text-shadow: 2px 2px 3px #000;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .btn-next {
+            padding: 5px 15px;
+            background: linear-gradient(to bottom, #8b0000, #4b0000);
+            border: 1px solid #ffd700;
+            color: white;
+            border-radius: 4px;
+            font-family: 'Kelly+Slab', serif;
+            text-transform: uppercase;
+            font-size: 11px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div id="percent" class="percent-text">0%</div>
+        <div class="loader-bar">
+            <div id="progress" class="loader-fill"></div>
+        </div>
+    </div>
+
+    <div id="game-screen">
+        <div class="main-wrapper">
+            <img src="marshal_blank.png" class="character-img">
+            <div class="dialog-container">
+                <div class="dialog-text">
+                    Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Я прибыл, чтобы присягнуть вам на верность. Позвольте мне возглавить вашу армию!
+                </div>
+                <button class="btn-next" onclick="alert('Диалог завершен!')">СЛУШАЮ, КАЙ!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.floor(Math.random() * 5) + 1;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                setTimeout(showGame, 500);
+            }
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('percent').innerText = progress + '%';
+        }, 80);
+
+        function showGame() {
+            const ls = document.getElementById('loading-screen');
+            ls.style.opacity = '0';
+            setTimeout(() => {
+                ls.style.display = 'none';
+                document.getElementById('game-screen').style.display = 'block';
+            }, 800);
+        }
+    </script>
+</body>
+</html>
