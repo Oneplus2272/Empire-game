@@ -15,8 +15,8 @@
         /* ЗАГРУЗОЧНЫЙ ЭКРАН */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            /* Добавил темно-серый цвет как заглушку, если bg.jpg не найден */
-            background: #1a1a1a url('bg.jpg') no-repeat center center; 
+            /* Поменял на bg.png */
+            background: #1a1a1a url('bg.png') no-repeat center center; 
             background-size: cover;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             z-index: 100; transition: opacity 0.8s ease;
@@ -42,10 +42,10 @@
             max-width: 100vw; object-fit: contain;
         }
 
-        /* ПОДНЯЛИ ТЕКСТ ВЫШЕ (изменили top с 82% на 78%) */
+        /* ПОЗИЦИЯ ТЕКСТА (еще чуть выше для идеального попадания) */
         .dialog-container {
             position: absolute;
-            top: 78%; 
+            top: 76%; 
             left: 50%;
             transform: translate(-50%, -50%);
             width: 80%;
@@ -121,8 +121,7 @@
         }
 
         function nextStep() {
-            // Переход к следующему этапу
-            alert("Командующий, Кай готов к действию!");
+            alert("Командующий, Кай готов! В следующем обновлении мы добавим карту города.");
         }
     </script>
 </body>
