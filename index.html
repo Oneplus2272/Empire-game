@@ -9,101 +9,60 @@
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; background-color: #000;
-            font-family: 'Kelly+Slab', serif;
+            font-family: 'Kelly Slab', serif;
         }
 
-        /* ЭКРАН ЗАГРУЗКИ */
+        /* ЗАГРУЗОЧНЫЙ ЭКРАН */
         #loading-screen {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: url('bg.jpg') no-repeat center center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a url('bg.jpg') no-repeat center center; 
             background-size: cover;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            z-index: 100;
-            transition: opacity 0.8s ease;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            z-index: 100; transition: opacity 0.8s ease;
         }
 
-        .loader-bar {
-            width: 70%; height: 8px;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid #ffd700;
-            margin-bottom: 60px;
-            border-radius: 10px;
-        }
-
-        .loader-fill {
-            width: 0%; height: 100%;
-            background: linear-gradient(90deg, #ffd700, #ff8c00);
-        }
-
-        .percent-text {
-            color: #ffd700;
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
+        .loader-bar { width: 70%; height: 8px; background: rgba(0,0,0,0.6); border: 1px solid #ffd700; margin-bottom: 60px; border-radius: 10px; position: relative; }
+        .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); transition: width 0.1s; }
+        .percent-text { color: #ffd700; margin-bottom: 10px; font-size: 20px; text-shadow: 2px 2px 4px #000; }
 
         /* ИГРОВОЙ ЭКРАН */
-        #game-screen {
-            position: relative;
-            width: 100vw; height: 100vh;
-            display: none;
-            background: #000;
+        #game-screen { 
+            position: relative; width: 100vw; height: 100vh; 
+            display: none; background: #000; 
         }
 
-        /* ОПУСКАЕМ ВСЁ ВНИЗ */
         .main-wrapper {
-            position: absolute;
-            bottom: 0; /* Прижимаем к самому низу */
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end; /* Контент падает вниз */
-            align-items: center;
+            position: relative; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
         }
 
         .character-img {
-            width: 100%;
-            max-height: 90vh; /* Чтобы не вылезало за экран сверху */
-            object-fit: contain;
-            display: block;
+            height: 100vh; width: auto; /* Картинка всегда во всю высоту */
+            max-width: 100vw; object-fit: contain;
         }
 
-        /* ПОЗИЦИЯ ТЕКСТА ВНУТРИ РАМКИ КАРТИНКИ */
+        /* ТЕКСТ ТЕПЕРЬ ПРИВЯЗАН К ЦЕНТРУ ЭКРАНА С ПРАВИЛЬНЫМ СМЕЩЕНИЕМ */
         .dialog-container {
             position: absolute;
-            bottom: 10%; /* Регулируй этот процент (8-12%), чтобы текст сел ровно в рамку */
+            top: 82%; /* Регулируй этот параметр (80-85%), чтобы попасть в рамку */
             left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
+            transform: translate(-50%, -50%);
+            width: 85%;
             text-align: center;
             z-index: 10;
         }
 
         .dialog-text {
-            color: #f0e6d2;
-            font-size: 15px;
-            line-height: 1.2;
-            text-shadow: 2px 2px 3px #000;
-            margin-bottom: 8px;
-            font-weight: bold;
+            color: #f0e6d2; font-size: 14px; line-height: 1.3;
+            text-shadow: 2px 2px 3px #000; margin-bottom: 10px;
+            font-weight: bold; min-height: 45px;
         }
 
         .btn-next {
-            padding: 5px 15px;
-            background: linear-gradient(to bottom, #8b0000, #4b0000);
-            border: 1px solid #ffd700;
-            color: white;
-            border-radius: 4px;
-            font-family: 'Kelly+Slab', serif;
-            text-transform: uppercase;
-            font-size: 11px;
-            cursor: pointer;
+            padding: 8px 20px; background: linear-gradient(to bottom, #8b0000, #4b0000);
+            border: 1px solid #ffd700; color: white; border-radius: 4px;
+            font-family: 'Kelly Slab', serif; text-transform: uppercase;
+            font-size: 12px; cursor: pointer; display: none; margin: 0 auto;
         }
     </style>
 </head>
@@ -111,27 +70,36 @@
 
     <div id="loading-screen">
         <div id="percent" class="percent-text">0%</div>
-        <div class="loader-bar">
-            <div id="progress" class="loader-fill"></div>
-        </div>
+        <div class="loader-bar"><div id="progress" class="loader-fill"></div></div>
     </div>
 
     <div id="game-screen">
         <div class="main-wrapper">
             <img src="marshal_blank.png" class="character-img">
             <div class="dialog-container">
-                <div class="dialog-text">
-                    Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Я прибыл, чтобы присягнуть вам на верность. Позвольте мне возглавить вашу армию!
-                </div>
-                <button class="btn-next" onclick="alert('Диалог завершен!')">СЛУШАЮ, КАЙ!</button>
+                <div class="dialog-text" id="typewriter"></div>
+                <button class="btn-next" id="next-btn" onclick="nextStep()">СЛУШАЮ, КАЙ!</button>
             </div>
         </div>
     </div>
 
     <script>
+        const text = "Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Я прибыл, чтобы присягнуть вам на верность. Позвольте мне возглавить вашу армию!";
+        let i = 0;
+
+        function typeWriter() {
+            if (i < text.length) {
+                document.getElementById("typewriter").innerHTML += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 35);
+            } else {
+                document.getElementById("next-btn").style.display = "block";
+            }
+        }
+
         let progress = 0;
         const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 5) + 1;
+            progress += Math.floor(Math.random() * 7) + 2;
             if (progress >= 100) {
                 progress = 100;
                 clearInterval(interval);
@@ -139,7 +107,7 @@
             }
             document.getElementById('progress').style.width = progress + '%';
             document.getElementById('percent').innerText = progress + '%';
-        }, 80);
+        }, 100);
 
         function showGame() {
             const ls = document.getElementById('loading-screen');
@@ -147,7 +115,13 @@
             setTimeout(() => {
                 ls.style.display = 'none';
                 document.getElementById('game-screen').style.display = 'block';
+                typeWriter();
             }, 800);
+        }
+
+        function nextStep() {
+            // Сюда мы вставим следующий диалог или переход к карте
+            alert("Командующий, Кай принял командование! Пора строить город.");
         }
     </script>
 </body>
