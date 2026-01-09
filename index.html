@@ -6,9 +6,9 @@
     <title>Empire: Dawn of War</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: 'Georgia', serif; }
 
-        /* ЗАГРУЗКА */
+        /* ЭКРАН ЗАГРУЗКИ */
         #loading-screen {
             position: fixed; inset: 0; background: url('bg.png') no-repeat center center / cover;
             display: flex; flex-direction: column; justify-content: space-between; align-items: center;
@@ -19,32 +19,38 @@
         .loader-cont { width: 100%; height: 25px; background: #000; border: 3px solid #ffd700; border-radius: 5px; overflow: hidden; position: relative; }
         #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
 
+        /* ЭКРАН ДИАЛОГА */
+        #dialog-screen { 
+            position: fixed; inset: 0; z-index: 4000; display: none;
+            background: linear-gradient(to bottom, transparent 20%, #000 90%);
+            flex-direction: column; justify-content: flex-end; align-items: center;
+        }
+        .character-img { height: 75%; position: absolute; bottom: 0; left: -10%; z-index: 1; filter: drop-shadow(0 0 15px #000); }
+        .dialog-box { 
+            width: 100%; background: rgba(10, 10, 10, 0.95); border-top: 5px solid #ffd700; 
+            padding: 30px 20px; color: white; box-sizing: border-box; z-index: 10;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+        }
+        .btn-game {
+            background: linear-gradient(#8b0000, #4a0000); color: #ffd700; border: 2px solid #ffd700;
+            padding: 15px; width: 100%; margin-top: 15px; font-weight: bold; font-size: 16px; text-transform: uppercase;
+        }
+
         /* ИГРОВОЙ МИР */
-        #game-viewport {
-            width: 100vw; height: 100vh; position: relative; overflow: hidden; display: none; background: #000;
-        }
-
-        /* САМА КАРТА (Слой, который мы двигаем) */
+        #game-viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; display: none; }
         #map-layer {
-            position: absolute;
-            width: 2500px; /* Размер карты (больше экрана для скролла) */
-            height: 2500px;
-            background: url('map.png') no-repeat center center;
-            background-size: cover;
-            cursor: grab;
-            will-change: transform; /* Подсказка браузеру для плавности */
+            position: absolute; width: 3000px; height: 3000px;
+            background: url('map.png') no-repeat center center / cover;
+            transform-origin: 0 0; will-change: transform;
         }
 
-        #map-layer:active { cursor: grabbing; }
-
-        /* Интерфейс поверх карты */
         .ui-panel {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; height: 45px;
-            background: rgba(0,0,0,0.8); border: 2px solid #ffd700; border-radius: 10px;
+            background: rgba(0,0,0,0.85); border: 2px solid #ffd700; border-radius: 8px;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
-        .res { color: #ffd700; font-weight: bold; }
+        .res { color: #ffd700; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -54,6 +60,15 @@
         <div class="loader-wrap">
             <div class="loader-cont"><div id="progress"></div></div>
             <div id="percent" style="color:#ffd700; margin-top:10px; font-weight:bold;">0%</div>
+        </div>
+    </div>
+
+    <div id="dialog-screen">
+        <img src="marshal_blank.png" class="character-img">
+        <div class="dialog-box">
+            <h3 style="color: #ffd700; margin: 0 0 10px 0;">МАРШАЛ КАЙ</h3>
+            <p id="dialog-text" style="font-size: 18px; line-height: 1.4;">Мой лорд, мы прибыли на земли предков. Туман войны рассеялся, и теперь эта территория принадлежит вам. Прикажете начать строительство цитадели?</p>
+            <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
 
@@ -76,63 +91,74 @@
             if(p >= 100) {
                 clearInterval(itv);
                 document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('game-viewport').style.display = 'block';
-                initCamera();
+                document.getElementById('dialog-screen').style.display = 'flex';
             }
         }, 70);
 
-        // 2. ЛОГИКА ПЕРЕМЕЩЕНИЯ (КАМЕРА)
-        function initCamera() {
-            const viewport = document.getElementById('game-viewport');
+        function startGame() {
+            document.getElementById('dialog-screen').style.display = 'none';
+            document.getElementById('game-viewport').style.display = 'block';
+            initEngine();
+        }
+
+        // 2. ДВИЖОК КАРТЫ (Drag & Zoom)
+        function initEngine() {
             const map = document.getElementById('map-layer');
-            
+            let scale = 0.5;
+            let posX = -500, posY = -500;
+            let lastX, lastY;
             let isDragging = false;
-            let startX, startY;
-            let currentX = -500; // Начальная позиция (центр карты)
-            let currentY = -500;
+            let startDist = 0; // Для зума пальцами
 
-            // Установка начальной позиции
-            map.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            function updateTransform() {
+                map.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            }
+            updateTransform();
 
-            const startDrag = (e) => {
-                isDragging = true;
-                const touch = e.type === 'touchstart' ? e.touches[0] : e;
-                startX = touch.clientX - currentX;
-                startY = touch.clientY - currentY;
+            // ПЕРЕМЕЩЕНИЕ
+            const onStart = (e) => {
+                if (e.touches && e.touches.length === 2) {
+                    startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                } else {
+                    isDragging = true;
+                    const t = e.touches ? e.touches[0] : e;
+                    lastX = t.clientX; lastY = t.clientY;
+                }
             };
 
-            const moveDrag = (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                const touch = e.type === 'touchmove' ? e.touches[0] : e;
-                
-                currentX = touch.clientX - startX;
-                currentY = touch.clientY - startY;
-
-                // Ограничения (чтобы не уйти за края карты)
-                const minX = viewport.clientWidth - map.clientWidth;
-                const minY = viewport.clientHeight - map.clientHeight;
-                
-                if (currentX > 0) currentX = 0;
-                if (currentY > 0) currentY = 0;
-                if (currentX < minX) currentX = minX;
-                if (currentY < minY) currentY = minY;
-
-                // Используем translate3d для ускорения через GPU
-                map.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+            const onMove = (e) => {
+                if (e.touches && e.touches.length === 2) {
+                    // ЗУМ ПАЛЬЦАМИ
+                    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    const delta = dist / startDist;
+                    scale = Math.min(Math.max(0.2, scale * delta), 1.5);
+                    startDist = dist;
+                    updateTransform();
+                } else if (isDragging) {
+                    // ПЕРЕМЕЩЕНИЕ
+                    const t = e.touches ? e.touches[0] : e;
+                    posX += t.clientX - lastX;
+                    posY += t.clientY - lastY;
+                    lastX = t.clientX; lastY = t.clientY;
+                    updateTransform();
+                }
             };
 
-            const stopDrag = () => { isDragging = false; };
+            const onEnd = () => { isDragging = false; };
 
-            // Слушатели для мышки
-            viewport.addEventListener('mousedown', startDrag);
-            window.addEventListener('mousemove', moveDrag);
-            window.addEventListener('mouseup', stopDrag);
+            // ЗУМ КОЛЕСИКОМ
+            window.addEventListener('wheel', (e) => {
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                scale = Math.min(Math.max(0.2, scale * delta), 1.5);
+                updateTransform();
+            });
 
-            // Слушатели для пальцев
-            viewport.addEventListener('touchstart', startDrag);
-            viewport.addEventListener('touchmove', moveDrag, { passive: false });
-            viewport.addEventListener('touchend', stopDrag);
+            window.addEventListener('mousedown', onStart);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchstart', onStart);
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
         }
     </script>
 </body>
