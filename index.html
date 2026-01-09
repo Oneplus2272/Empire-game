@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Empire: Dawn of War</title>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: 'serif'; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'serif'; }
 
         /* ЗАГРУЗКА */
         #loading-screen {
@@ -14,11 +14,8 @@
             display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             z-index: 5000; padding: 60px 0;
         }
-        .game-title { 
-            color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; 
-            text-shadow: 0 0 15px #000; text-transform: uppercase; letter-spacing: 4px;
-        }
-        .loader-wrap { width: 85%; max-width: 400px; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
+        .game-title { color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 0 0 15px #000; text-transform: uppercase; }
+        .loader-wrap { width: 85%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
         .loader-cont { width: 100%; height: 26px; background: #000; border: 4px solid #ffd700; position: relative; }
         #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
 
@@ -28,30 +25,27 @@
             background: linear-gradient(to bottom, transparent 20%, #000 90%);
             flex-direction: column; justify-content: flex-end; align-items: center;
         }
-        .character-img { height: 70%; position: absolute; bottom: 0; left: 0; z-index: 1; filter: drop-shadow(0 0 20px #000); }
-        .dialog-box { 
-            width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; 
-            padding: 30px 20px; color: white; box-sizing: border-box; z-index: 10;
-        }
-        .btn-game {
-            background: #8b0000; color: #ffd700; border: 2px solid #ffd700;
-            padding: 16px; width: 100%; margin-top: 15px; font-weight: bold; font-size: 16px; 
-        }
+        .character-img { height: 70%; position: absolute; bottom: 0; left: 0; z-index: 1; }
+        .dialog-box { width: 100%; background: rgba(10, 10, 10, 0.98); border-top: 4px solid #ffd700; padding: 30px 20px; color: white; z-index: 10; }
+        .btn-game { background: #8b0000; color: #ffd700; border: 2px solid #ffd700; padding: 16px; width: 100%; margin-top: 15px; font-weight: bold; }
 
-        /* КАРТА */
+        /* ИГРОВОЙ МИР */
         #game-viewport { 
-            width: 100vw; height: 100vh; position: relative; display: none; overflow: hidden; background: #000;
+            width: 100vw; height: 100vh; display: none; overflow: auto; 
+            -webkit-overflow-scrolling: touch; background: #000;
         }
-        #map-container {
-            width: 3000px; height: 3000px;
-            position: absolute;
-            background: url('map.png') no-repeat center center / cover;
-            transform-origin: 0 0;
-            will-change: transform;
+        /* Убираем полосы прокрутки */
+        #game-viewport::-webkit-scrollbar { display: none; }
+
+        #map-img {
+            display: block;
+            width: 3000px; /* Огромная карта */
+            height: auto;
+            pointer-events: none; /* Чтобы картинка не мешала свайпу */
         }
 
         .ui-panel {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
             width: 90%; height: 45px; background: rgba(0,0,0,0.8); border: 2px solid #ffd700;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
@@ -72,7 +66,7 @@
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
             <h3 style="color:#ffd700; margin:0 0 10px 0;">МАРШАЛ КАЙ</h3>
-            <p>Мой лорд, карта земель готова. Пора вступить в права!</p>
+            <p>Мой лорд, карта готова. Просто ведите пальцем, чтобы осмотреть владения.</p>
             <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
@@ -83,11 +77,11 @@
             <div class="res">⚔️ 200</div>
             <div class="res">💰 100</div>
         </div>
-        <div id="map-container"></div>
+        <img src="map.png" id="map-img">
     </div>
 
     <script>
-        // ЗАГРУЗКА
+        // ЗАГРУЗКА 7 СЕКУНД
         let p = 0;
         let itv = setInterval(() => {
             p++;
@@ -102,78 +96,14 @@
 
         function startGame() {
             document.getElementById('dialog-screen').style.display = 'none';
-            document.getElementById('game-viewport').style.display = 'block';
-            initBetterMap();
-        }
-
-        function initBetterMap() {
-            const map = document.getElementById('map-container');
-            let scale = 0.5;
-            let pos = { x: -500, y: -500 };
-            let startPos = { x: 0, y: 0 };
-            let isDragging = false;
-            let lastDist = 0;
-
-            function update() {
-                // Ограничения (чтобы не видели край)
-                const minX = window.innerWidth - (map.offsetWidth * scale);
-                const minY = window.innerHeight - (map.offsetHeight * scale);
-                
-                if (pos.x > 0) pos.x = 0;
-                if (pos.y > 0) pos.y = 0;
-                if (pos.x < minX) pos.x = minX;
-                if (pos.y < minY) pos.y = minY;
-
-                map.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) scale(${scale})`;
-            }
-
-            // Тач-события
-            window.addEventListener('touchstart', e => {
-                if (e.touches.length === 1) {
-                    isDragging = true;
-                    startPos.x = e.touches[0].clientX - pos.x;
-                    startPos.y = e.touches[0].clientY - pos.y;
-                } else if (e.touches.length === 2) {
-                    lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                }
-            });
-
-            window.addEventListener('touchmove', e => {
-                if (isDragging && e.touches.length === 1) {
-                    pos.x = e.touches[0].clientX - startPos.x;
-                    pos.y = e.touches[0].clientY - startPos.y;
-                    update();
-                } else if (e.touches.length === 2) {
-                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                    const delta = dist / lastDist;
-                    scale = Math.max(0.3, Math.min(1.5, scale * delta));
-                    lastDist = dist;
-                    update();
-                }
-            }, { passive: false });
-
-            window.addEventListener('touchend', () => isDragging = false);
-
-            // Мышь
-            window.addEventListener('mousedown', e => {
-                isDragging = true;
-                startPos.x = e.clientX - pos.x;
-                startPos.y = e.clientY - pos.y;
-            });
-            window.addEventListener('mousemove', e => {
-                if (!isDragging) return;
-                pos.x = e.clientX - startPos.x;
-                pos.y = e.clientY - startPos.y;
-                update();
-            });
-            window.addEventListener('mouseup', () => isDragging = false);
-            window.addEventListener('wheel', e => {
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                scale = Math.max(0.3, Math.min(1.5, scale * delta));
-                update();
-            });
-
-            update();
+            const view = document.getElementById('game-viewport');
+            view.style.display = 'block';
+            
+            // Центрируем камеру в начале игры
+            setTimeout(() => {
+                view.scrollLeft = 1000;
+                view.scrollTop = 500;
+            }, 10);
         }
     </script>
 </body>
