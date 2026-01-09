@@ -3,146 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empire: Кай - Экспедиция</title>
+    <title>Empire: Dawn of War - RPG</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111; font-family: 'Georgia', serif; color: white; }
-        
-        /* КАРТА НА ФОНЕ */
-        #game-map {
+        :root {
+            --gold: #ffd700;
+            --dark-gold: #b8860b;
+            --border-style: 3px solid var(--gold);
+            --bg-panel: rgba(20, 20, 20, 0.95);
+        }
+
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Georgia', serif; color: #eee; }
+
+        /* ФОН КАРТЫ */
+        #bg-map {
             position: fixed; inset: 0;
             background: url('map.png') no-repeat center center / cover;
-            filter: brightness(0.4); /* Приглушаем карту, чтобы текст читался */
+            filter: brightness(0.3) blur(1px);
             z-index: 1;
         }
 
-        /* ПАНЕЛЬ РЕСУРСОВ (В 2 РЯДА) */
+        /* 1. КРАСИВАЯ ПАНЕЛЬ РЕСУРСОВ */
         #res-panel {
-            position: fixed; top: 10px; right: 10px;
-            background: rgba(0,0,0,0.8); border: 2px solid #ffd700;
-            padding: 10px; border-radius: 8px; z-index: 100;
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-            font-size: 14px; font-weight: bold;
+            position: fixed; top: 15px; right: 15px;
+            background: var(--bg-panel);
+            border: var(--border-style);
+            box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,215,0,0.2);
+            padding: 10px; z-index: 100;
+            display: grid; grid-template-columns: repeat(3, 80px); gap: 8px;
+            border-radius: 4px;
         }
-        .res-item { color: #ffd700; display: flex; align-items: center; gap: 5px; }
+        .res-item {
+            display: flex; flex-direction: column; align-items: center;
+            background: rgba(255,255,255,0.05); border: 1px solid #444; padding: 5px;
+        }
+        .res-icon { font-size: 18px; margin-bottom: 2px; }
+        .res-val { color: var(--gold); font-size: 12px; font-weight: bold; text-shadow: 1px 1px #000; }
 
-        /* ОКНО СОБЫТИЯ */
-        #event-window {
+        /* 2. РАМКА КАЯ (ПОРТРЕТ) */
+        #kai-frame {
+            position: fixed; top: 15px; left: 15px; z-index: 100;
+            width: 100px; height: 130px;
+            background: var(--bg-panel); border: var(--border-style);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .kai-img {
+            width: 100%; height: 100px;
+            background: url('marshal_blank.png') no-repeat top center / cover;
+            border-bottom: 2px solid var(--gold);
+        }
+        .kai-hp-container { padding: 4px; background: #000; height: 30px; }
+        .hp-bar { width: 100%; height: 8px; background: #300; border: 1px solid #600; border-radius: 2px; }
+        #hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #800, #f00); transition: 0.5s; }
+        .kai-label { font-size: 9px; text-align: center; color: var(--gold); text-transform: uppercase; margin-top: 2px; }
+
+        /* 3. КРАСИВОЕ ОКНО ДИАЛОГА */
+        #dialog-container {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px;
-            background: rgba(15, 15, 15, 0.95); border: 3px solid #ffd700;
-            z-index: 200; display: flex; flex-direction: column;
+            width: 95%; max-width: 700px; height: 180px;
+            z-index: 200; display: flex;
         }
-        .event-header { background: #ffd700; color: #000; padding: 5px 15px; font-weight: bold; text-transform: uppercase; }
-        .event-body { padding: 20px; font-size: 16px; line-height: 1.4; border-bottom: 1px solid #333; }
-        .event-footer { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         
-        .choice-btn {
-            background: #222; color: #fff; border: 1px solid #ffd700; padding: 12px;
-            text-align: left; cursor: pointer; transition: 0.2s; font-size: 14px;
+        /* Мини-рамка для того, кто говорит */
+        .speaker-frame {
+            width: 120px; height: 100%; background: var(--bg-panel);
+            border: var(--border-style); border-right: none;
+            display: flex; align-items: center; justify-content: center;
         }
-        .choice-btn:hover { background: #8b0000; }
-        
-        /* ПАНЕЛЬ КАЯ (ЗДОРОВЬЕ) */
-        #kai-status {
-            position: fixed; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.8); border: 2px solid #ff4444;
-            padding: 10px; border-radius: 8px; z-index: 100;
+        .speaker-img { width: 90%; height: 90%; background: rgba(255,255,255,0.1); border: 1px solid #444; object-fit: cover; }
+
+        /* Само поле текста */
+        .text-frame {
+            flex: 1; background: var(--bg-panel);
+            border: var(--border-style); padding: 20px;
+            position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
         }
-        .hp-bar { width: 100px; height: 10px; background: #440000; margin-top: 5px; border: 1px solid #ff4444; }
-        #hp-fill { width: 100%; height: 100%; background: #ff4444; transition: 0.5s; }
+        .speaker-name { color: var(--gold); font-weight: bold; font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid var(--dark-gold); display: inline-block; }
+        .dialog-text { font-size: 15px; line-height: 1.5; color: #ddd; font-style: italic; }
+
+        /* КНОПКИ ВЫБОРА */
+        .choice-box {
+            position: absolute; right: -5px; top: -110px;
+            display: flex; flex-direction: column; gap: 8px; width: 300px;
+        }
+        .btn-choice {
+            background: rgba(30, 0, 0, 0.9); border: 2px solid var(--gold);
+            color: #fff; padding: 10px 15px; cursor: pointer; text-align: left;
+            font-size: 13px; transition: 0.3s;
+        }
+        .btn-choice:hover { background: var(--dark-gold); color: #000; transform: scale(1.02); }
     </style>
 </head>
 <body>
 
-    <div id="game-map"></div>
+    <div id="bg-map"></div>
 
     <div id="res-panel">
-        <div class="res-item">🍞 <span id="res-bread">100</span></div>
-        <div class="res-item">🪵 <span id="res-wood">0</span></div>
-        <div class="res-item">🪨 <span id="res-stone">0</span></div>
-        <div class="res-item">⛓️ <span id="res-iron">0</span></div>
-        <div class="res-item">🪙 <span id="res-silver">500</span></div>
-        <div class="res-item">🏆 <span id="res-gold">0</span></div>
+        <div class="res-item"><span class="res-icon">🍞</span><span class="res-val" id="res-bread">100</span></div>
+        <div class="res-item"><span class="res-icon">🪵</span><span class="res-val" id="res-wood">50</span></div>
+        <div class="res-item"><span class="res-icon">🪨</span><span class="res-val" id="res-stone">20</span></div>
+        <div class="res-item"><span class="res-icon">⛓️</span><span class="res-val" id="res-iron">0</span></div>
+        <div class="res-item"><span class="res-icon">🪙</span><span class="res-val" id="res-silver">500</span></div>
+        <div class="res-item"><span class="res-icon">🏆</span><span class="res-val" id="res-gold">0</span></div>
     </div>
 
-    <div id="kai-status">
-        <div style="font-size: 12px; font-weight: bold; color: #ff4444;">МАРШАЛ КАЙ</div>
-        <div class="hp-bar"><div id="hp-fill"></div></div>
-    </div>
-
-    <div id="event-window">
-        <div class="event-header">Событие: Старый мост</div>
-        <div class="event-body" id="event-text">
-            Мой лорд, впереди заброшенный караван под мостом. Там рассыпано серебро и провизия, но в тенях могут прятаться разбойники. Как поступим?
+    <div id="kai-frame">
+        <div class="kai-img"></div>
+        <div class="kai-hp-container">
+            <div class="hp-bar"><div id="hp-fill"></div></div>
+            <div class="kai-label">МАРШАЛ КАЙ</div>
         </div>
-        <div class="event-footer" id="choices">
-            <button class="choice-btn" onclick="makeChoice('stealth')">1. Отправить разведчиков вброд (-20 Хлеба, безопасно)</button>
-            <button class="choice-btn" onclick="makeChoice('attack')">2. Кай возглавит атаку (Риск ранения, шанс на железо)</button>
-            <button class="choice-btn" onclick="makeChoice('scrap')">3. Разобрать мост на стройматериалы (+Дерево, +Камень)</button>
+    </div>
+
+    <div id="dialog-container">
+        <div class="speaker-frame">
+            <img src="marshal_blank.png" class="speaker-img" id="speaker-portrait">
+        </div>
+        <div class="text-frame">
+            <div class="speaker-name" id="speaker-name">МАРШАЛ КАЙ</div>
+            <div class="dialog-text" id="dialog-content">
+                Мой лорд, впереди заброшенный мост. Разведчики докладывают о движении в тенях. Прикажете рискнуть или поищем другой путь?
+            </div>
+
+            <div class="choice-box" id="choices">
+                <button class="btn-choice" onclick="selectChoice(1)">1. Отправить разведчиков вброд (-20 Хлеба)</button>
+                <button class="btn-choice" onclick="selectChoice(2)">2. Возглавить атаку (Риск ранения)</button>
+                <button class="btn-choice" onclick="selectChoice(3)">3. Разобрать мост на дерево</button>
+            </div>
         </div>
     </div>
 
 <script>
-    // Начальные данные
-    let resources = { bread: 100, wood: 0, stone: 0, iron: 0, silver: 500, gold: 0 };
-    let kaiHP = 100;
+    let stats = { bread: 100, wood: 50, stone: 20, iron: 0, silver: 500, gold: 0, hp: 100 };
 
-    function updateUI() {
-        document.getElementById('res-bread').innerText = resources.bread;
-        document.getElementById('res-wood').innerText = resources.wood;
-        document.getElementById('res-stone').innerText = resources.stone;
-        document.getElementById('res-iron').innerText = resources.iron;
-        document.getElementById('res-silver').innerText = resources.silver;
-        document.getElementById('res-gold').innerText = resources.gold;
-        document.getElementById('hp-fill').style.width = kaiHP + '%';
-        
-        if (kaiHP <= 0) {
-            alert("МАРШАЛ КАЙ ПАЛ! Игра окончена или требуется воскрешение.");
-            location.reload(); // Перезагрузка для примера
+    function refreshUI() {
+        document.getElementById('res-bread').innerText = stats.bread;
+        document.getElementById('res-wood').innerText = stats.wood;
+        document.getElementById('res-stone').innerText = stats.stone;
+        document.getElementById('res-iron').innerText = stats.iron;
+        document.getElementById('res-silver').innerText = stats.silver;
+        document.getElementById('res-gold').innerText = stats.gold;
+        document.getElementById('hp-fill').style.width = stats.hp + '%';
+
+        if(stats.hp <= 0) {
+            document.getElementById('dialog-content').innerText = "МАРШАЛ КАЙ ПАЛ. БЕЗ НЕГО АРМИЯ ПЕРЕБИЛА ДРУГ ДРУГА...";
+            document.getElementById('choices').innerHTML = '<button class="btn-choice" onclick="location.reload()">ВОСКРЕСИТЬ (МАГИЯ)</button>';
         }
     }
 
-    function makeChoice(type) {
-        const text = document.getElementById('event-text');
-        const footer = document.getElementById('choices');
+    function selectChoice(num) {
+        const content = document.getElementById('dialog-content');
+        const choiceBox = document.getElementById('choices');
 
-        if (type === 'stealth') {
-            if (resources.bread >= 20) {
-                resources.bread -= 20;
-                resources.silver += 200;
-                resources.bread += 50;
-                text.innerText = "Успех! Разведчики зашли в тыл. Разбойники бежали, бросив еду и серебро.";
-            } else {
-                alert("Недостаточно хлеба!"); return;
+        if(num === 1) {
+            if(stats.bread >= 20) {
+                stats.bread -= 20; stats.silver += 200;
+                content.innerText = "Разведчики успешно обошли засаду! Мы захватили брошенное серебро.";
             }
-        } 
-        else if (type === 'attack') {
-            let hurt = Math.random() < 0.5; // 50% шанс ранения
-            if (hurt) {
-                kaiHP -= 30;
-                text.innerText = "Победа горька! Вы захватили караван и железо, но Кая ранили стрелой в плечо.";
-            } else {
-                text.innerText = "Блестящая победа! Разбойники разгромлены, Кай невредим.";
-            }
-            resources.silver += 200;
-            resources.iron += 10;
-        } 
-        else if (type === 'scrap') {
-            resources.wood += 150;
-            resources.stone += 80;
-            text.innerText = "Вы решили не рисковать. Мост разобран, повозки остались врагу, но у нас теперь есть материалы.";
+        } else if(num === 2) {
+            let wounded = Math.random() < 0.5;
+            if(wounded) { stats.hp -= 35; content.innerText = "Победа! Но Кай тяжело ранен стрелой разбойника."; }
+            else { content.innerText = "Чистая победа! Враг бежал, бросив припасы."; }
+            stats.silver += 300;
+        } else if(num === 3) {
+            stats.wood += 100;
+            content.innerText = "Мы решили не рисковать людьми и разобрали конструкции моста на дрова.";
         }
 
-        footer.innerHTML = '<button class="choice-btn" onclick="nextEvent()">Продолжить путь...</button>';
-        updateUI();
+        choiceBox.innerHTML = '<button class="btn-choice" onclick="nextEvent()">Продолжить экспедицию...</button>';
+        refreshUI();
     }
 
     function nextEvent() {
-        alert("Тут будет переход к следующей точке на карте!");
-        // Здесь можно сменить текст события на новое
+        alert("Переход к следующей локации...");
     }
 
-    updateUI();
+    refreshUI();
 </script>
 </body>
 </html>
