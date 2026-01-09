@@ -21,7 +21,7 @@
         }
 
         .loader-bar { width: 70%; height: 8px; background: rgba(0,0,0,0.6); border: 1px solid #ffd700; margin-bottom: 60px; border-radius: 10px; }
-        .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); }
+        .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); transition: width 0.2s; }
         .percent-text { color: #ffd700; margin-bottom: 10px; font-size: 20px; text-shadow: 2px 2px 4px #000; }
 
         #game-screen { position: relative; width: 100vw; height: 100vh; display: none; background: #000; }
@@ -44,7 +44,7 @@
             font-weight: bold; min-height: 60px;
         }
 
-        .buttons-block { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .buttons-block { display: flex; justify-content: center; gap: 10px; }
 
         .btn-game {
             padding: 10px 15px; background: linear-gradient(to bottom, #8b0000, #4b0000);
@@ -66,71 +66,74 @@
             <img src="marshal_blank.png" class="character-img">
             <div class="dialog-container">
                 <div class="dialog-text" id="typewriter"></div>
-                <div class="buttons-block" id="btns">
-                    <button class="btn-game" id="next-btn" onclick="secondDialogue()">СЛУШАЮ, КАЙ!</button>
-                    <button class="btn-game" id="opt1" onclick="makeChoice('Лесопилку')">ЛЕСОПИЛКА</button>
-                    <button class="btn-game" id="opt2" onclick="makeChoice('Кузницу')">КУЗНИЦА</button>
+                <div class="buttons-block">
+                    <button class="btn-game" id="btn-next" onclick="startSecondDialogue()">СЛУШАЮ, КАЙ!</button>
+                    <button class="btn-game" id="btn-wood" onclick="finalChoice('Лесопилку')">ЛЕСОПИЛКА</button>
+                    <button class="btn-game" id="btn-steel" onclick="finalChoice('Кузницу')">КУЗНИЦА</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const phrase1 = "Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Я прибыл, чтобы присягнуть вам на верность. Позвольте мне возглавить вашу армию!";
-        const phrase2 = "Командующий, наши запасы на исходе. С чего начнем восстановление? Нам нужно дерево для строительства или сталь для мечей?";
+        const text1 = "Приветствую, Командующий! Моё имя — Маршал Кай. Враг у ворот, и наши земли в опасности. Позвольте мне возглавить вашу армию!";
+        const text2 = "Командующий, наши запасы на исходе. С чего начнем восстановление? Нам нужно дерево для строительства или сталь для мечей?";
         
-        let i = 0;
-        let currentText = "";
+        let charIndex = 0;
 
-        function typeWriter(textToType, btnToShow) {
-            document.getElementById("typewriter").innerHTML = "";
-            i = 0;
-            function type() {
-                if (i < textToType.length) {
-                    document.getElementById("typewriter").innerHTML += textToType.charAt(i);
-                    i++;
-                    setTimeout(type, 30);
+        // Функция печати текста
+        function type(message, callback) {
+            const display = document.getElementById("typewriter");
+            display.innerHTML = "";
+            charIndex = 0;
+            
+            function print() {
+                if (charIndex < message.length) {
+                    display.innerHTML += message.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(print, 30);
                 } else {
-                    if(Array.isArray(btnToShow)) {
-                        btnToShow.forEach(id => document.getElementById(id).style.display = "block");
-                    } else {
-                        document.getElementById(btnToShow).style.display = "block";
-                    }
+                    if (callback) callback();
                 }
             }
-            type();
+            print();
         }
 
-        // Загрузка
+        // Логика загрузки
         let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 5) + 5;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(interval);
-                setTimeout(showGame, 500);
-            }
+        const loadTimer = setInterval(() => {
+            progress += 5;
+            if (progress > 100) progress = 100;
             document.getElementById('progress').style.width = progress + '%';
             document.getElementById('percent').innerText = progress + '%';
+            
+            if (progress === 100) {
+                clearInterval(loadTimer);
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').style.display = 'none';
+                        document.getElementById('game-screen').style.display = 'block';
+                        type(text1, () => {
+                            document.getElementById('btn-next').style.display = 'block';
+                        });
+                    }, 800);
+                }, 500);
+            }
         }, 100);
 
-        function showGame() {
-            document.getElementById('loading-screen').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('game-screen').style.display = 'block';
-                typeWriter(phrase1, "next-btn");
-            }, 800);
+        // Переход ко второму вопросу
+        function startSecondDialogue() {
+            document.getElementById('btn-next').style.display = 'none';
+            type(text2, () => {
+                document.getElementById('btn-wood').style.display = 'block';
+                document.getElementById('btn-steel').style.display = 'block';
+            });
         }
 
-        function secondDialogue() {
-            document.getElementById("next-btn").style.display = "none";
-            typeWriter(phrase2, ["opt1", "opt2"]);
-        }
-
-        function makeChoice(choice) {
-            alert("Вы приказали строить " + choice + "! Маршал Кай приступает к работе.");
-            // Здесь в следующем шаге мы сделаем переход к карте
+        // Финальный выбор (пока что просто алерт)
+        function finalChoice(name) {
+            alert("Приказ принят! Начинаем строить " + name);
         }
     </script>
 </body>
