@@ -5,98 +5,134 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Empire: Dawn of War</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-        
-        /* ГЛАВНЫЙ ЭКРАН ИГРЫ (Карта на весь экран) */
-        #game-container {
-            position: relative; width: 100vw; height: 100vh;
-            background: url('map.png') no-repeat center center;
-            background-size: cover; /* ВОТ ОНО! Растягивает на весь экран */
-            display: none;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; position: fixed; font-family: sans-serif; }
 
-        /* Название игры сверху */
-        .game-header {
-            position: absolute; top: 20px; width: 100%; text-align: center;
-            color: #ffd700; font-size: 28px; font-weight: bold;
-            text-shadow: 2px 2px 10px #000; z-index: 10; text-transform: uppercase;
-        }
-
-        /* Загрузочный экран */
+        /* ЗАГРУЗКА */
         #loading-screen {
-            position: fixed; inset: 0; background: url('bg.png') center/cover;
-            display: flex; flex-direction: column; justify-content: space-around; align-items: center; z-index: 9999;
+            position: fixed; inset: 0; background: url('bg.png') no-repeat center center / cover;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            z-index: 5000; padding: 50px 0;
+        }
+        .game-title { color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 2px 2px 10px #000; text-transform: uppercase; }
+        .loader-wrap { width: 80%; max-width: 400px; display: flex; flex-direction: column; align-items: center; margin-bottom: 50px; }
+        .loader-cont { width: 100%; height: 25px; background: #000; border: 3px solid #ffd700; border-radius: 5px; overflow: hidden; position: relative; }
+        #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
+
+        /* ИГРОВОЙ МИР */
+        #game-viewport {
+            width: 100vw; height: 100vh; position: relative; overflow: hidden; display: none; background: #000;
         }
 
-        .loader-box { width: 80%; max-width: 400px; height: 30px; border: 4px solid #ffd700; background: #000; position: relative; }
-        .bar { width: 0%; height: 100%; background: linear-gradient(to bottom, #fff, #ffd700, #b8860b); transition: 0.1s; }
-
-        /* Слой зданий */
-        .building { position: absolute; transform: translate(-50%, -50%); cursor: pointer; transition: 0.3s; }
-        .building:active { scale: 1.1; }
-
-        /* Диалог */
-        #dialog {
-            position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.95);
-            border-top: 5px solid #ffd700; padding: 25px; color: #fff; z-index: 100; display: none;
+        /* САМА КАРТА (Слой, который мы двигаем) */
+        #map-layer {
+            position: absolute;
+            width: 2500px; /* Размер карты (больше экрана для скролла) */
+            height: 2500px;
+            background: url('map.png') no-repeat center center;
+            background-size: cover;
+            cursor: grab;
+            will-change: transform; /* Подсказка браузеру для плавности */
         }
+
+        #map-layer:active { cursor: grabbing; }
+
+        /* Интерфейс поверх карты */
+        .ui-panel {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; height: 45px;
+            background: rgba(0,0,0,0.8); border: 2px solid #ffd700; border-radius: 10px;
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+        }
+        .res { color: #ffd700; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div class="game-header">EMPIRE: DAWN OF WAR</div>
-        <div class="loader-box"><div id="progress" class="bar"></div></div>
+        <div class="game-title">EMPIRE:<br>DAWN OF WAR</div>
+        <div class="loader-wrap">
+            <div class="loader-cont"><div id="progress"></div></div>
+            <div id="percent" style="color:#ffd700; margin-top:10px; font-weight:bold;">0%</div>
+        </div>
     </div>
 
-    <div id="game-container">
-        <div class="game-header">МОЯ ИМПЕРИЯ</div>
-        <div id="buildings-layer"></div>
-    </div>
-
-    <div id="dialog">
-        <h3 style="color:#ffd700; margin:0;">МАРШАЛ КАЙ</h3>
-        <p>Мой лорд, территория под контролем. Начинаем застройку?</p>
-        <button onclick="enterGame()" style="width:100%; padding:15px; background:#8b0000; color:#ffd700; border:2px solid #ffd700; font-weight:bold;">ВСТУПИТЬ В ПРАВА</button>
+    <div id="game-viewport">
+        <div class="ui-panel">
+            <div class="res">🌲 500</div>
+            <div class="res">⚔️ 200</div>
+            <div class="res">💰 100</div>
+        </div>
+        <div id="map-layer"></div>
     </div>
 
     <script>
-        // Координаты, которые ты прислал (в процентах для адаптивности)
-        const slots = [
-            {id: 'castle', top: 45.6, left: 50.0, type: '🏰'},
-            {id: 'wood_1', top: 17.6, left: 64.4, type: '🌲'},
-            {id: 'mine_1', top: 12.2, left: 39.7, type: '⚒️'}
-        ];
-
-        // Загрузка
+        // 1. ЗАГРУЗКА
         let p = 0;
         let itv = setInterval(() => {
-            p++; document.getElementById('progress').style.width = p+'%';
+            p++;
+            document.getElementById('progress').style.width = p+'%';
+            document.getElementById('percent').innerText = p+'%';
             if(p >= 100) {
                 clearInterval(itv);
                 document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('dialog').style.display = 'block';
+                document.getElementById('game-viewport').style.display = 'block';
+                initCamera();
             }
         }, 70);
 
-        function enterGame() {
-            document.getElementById('dialog').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            renderBuildings();
-        }
+        // 2. ЛОГИКА ПЕРЕМЕЩЕНИЯ (КАМЕРА)
+        function initCamera() {
+            const viewport = document.getElementById('game-viewport');
+            const map = document.getElementById('map-layer');
+            
+            let isDragging = false;
+            let startX, startY;
+            let currentX = -500; // Начальная позиция (центр карты)
+            let currentY = -500;
 
-        function renderBuildings() {
-            const layer = document.getElementById('buildings-layer');
-            slots.forEach(s => {
-                let div = document.createElement('div');
-                div.className = 'building';
-                div.style.top = s.top + '%';
-                div.style.left = s.left + '%';
-                div.style.fontSize = '40px';
-                div.innerHTML = s.type;
-                div.onclick = () => alert("Объект: " + s.id);
-                layer.appendChild(div);
-            });
+            // Установка начальной позиции
+            map.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+            const startDrag = (e) => {
+                isDragging = true;
+                const touch = e.type === 'touchstart' ? e.touches[0] : e;
+                startX = touch.clientX - currentX;
+                startY = touch.clientY - currentY;
+            };
+
+            const moveDrag = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const touch = e.type === 'touchmove' ? e.touches[0] : e;
+                
+                currentX = touch.clientX - startX;
+                currentY = touch.clientY - startY;
+
+                // Ограничения (чтобы не уйти за края карты)
+                const minX = viewport.clientWidth - map.clientWidth;
+                const minY = viewport.clientHeight - map.clientHeight;
+                
+                if (currentX > 0) currentX = 0;
+                if (currentY > 0) currentY = 0;
+                if (currentX < minX) currentX = minX;
+                if (currentY < minY) currentY = minY;
+
+                // Используем translate3d для ускорения через GPU
+                map.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+            };
+
+            const stopDrag = () => { isDragging = false; };
+
+            // Слушатели для мышки
+            viewport.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousemove', moveDrag);
+            window.addEventListener('mouseup', stopDrag);
+
+            // Слушатели для пальцев
+            viewport.addEventListener('touchstart', startDrag);
+            viewport.addEventListener('touchmove', moveDrag, { passive: false });
+            viewport.addEventListener('touchend', stopDrag);
         }
     </script>
 </body>
