@@ -16,7 +16,7 @@
         }
         .game-title { color: #ffd700; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 2px 2px 10px #000; text-transform: uppercase; }
         .loader-wrap { width: 80%; max-width: 400px; display: flex; flex-direction: column; align-items: center; margin-bottom: 50px; }
-        .loader-cont { width: 100%; height: 25px; background: #000; border: 3px solid #ffd700; border-radius: 5px; overflow: hidden; position: relative; }
+        .loader-cont { width: 100%; height: 25px; background: #000; border: 3px solid #ffd700; border-radius: 5px; overflow: hidden; }
         #progress { width: 0%; height: 100%; background: linear-gradient(180deg, #fff2ac, #ffd700, #b8860b); }
 
         /* ЭКРАН ДИАЛОГА */
@@ -25,23 +25,22 @@
             background: linear-gradient(to bottom, transparent 20%, #000 90%);
             flex-direction: column; justify-content: flex-end; align-items: center;
         }
-        .character-img { height: 75%; position: absolute; bottom: 0; left: -10%; z-index: 1; filter: drop-shadow(0 0 15px #000); }
+        .character-img { height: 75%; position: absolute; bottom: 0; left: 0; z-index: 1; filter: drop-shadow(0 0 15px #000); }
         .dialog-box { 
             width: 100%; background: rgba(10, 10, 10, 0.95); border-top: 5px solid #ffd700; 
             padding: 30px 20px; color: white; box-sizing: border-box; z-index: 10;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
         }
         .btn-game {
             background: linear-gradient(#8b0000, #4a0000); color: #ffd700; border: 2px solid #ffd700;
             padding: 15px; width: 100%; margin-top: 15px; font-weight: bold; font-size: 16px; text-transform: uppercase;
         }
 
-        /* ИГРОВОЙ МИР */
+        /* КАРТА */
         #game-viewport { width: 100vw; height: 100vh; position: relative; overflow: hidden; display: none; }
         #map-layer {
-            position: absolute; width: 3000px; height: 3000px;
-            background: url('map.png') no-repeat center center / cover;
-            transform-origin: 0 0; will-change: transform;
+            position: absolute; width: 2000px; height: 2000px;
+            background: url('map.png') no-repeat center center;
+            background-size: cover; transform-origin: center; will-change: transform;
         }
 
         .ui-panel {
@@ -67,7 +66,7 @@
         <img src="marshal_blank.png" class="character-img">
         <div class="dialog-box">
             <h3 style="color: #ffd700; margin: 0 0 10px 0;">МАРШАЛ КАЙ</h3>
-            <p id="dialog-text" style="font-size: 18px; line-height: 1.4;">Мой лорд, мы прибыли на земли предков. Туман войны рассеялся, и теперь эта территория принадлежит вам. Прикажете начать строительство цитадели?</p>
+            <p>Мой лорд, земли разведаны. Пора занять трон!</p>
             <button class="btn-game" onclick="startGame()">ВСТУПИТЬ В ПРАВА</button>
         </div>
     </div>
@@ -82,7 +81,7 @@
     </div>
 
     <script>
-        // 1. ЗАГРУЗКА
+        // ЗАГРУЗКА
         let p = 0;
         let itv = setInterval(() => {
             p++;
@@ -98,25 +97,32 @@
         function startGame() {
             document.getElementById('dialog-screen').style.display = 'none';
             document.getElementById('game-viewport').style.display = 'block';
-            initEngine();
+            initController();
         }
 
-        // 2. ДВИЖОК КАРТЫ (Drag & Zoom)
-        function initEngine() {
+        function initController() {
             const map = document.getElementById('map-layer');
-            let scale = 0.5;
-            let posX = -500, posY = -500;
-            let lastX, lastY;
+            let scale = 1;
+            let posX = 0, posY = 0;
+            let lastX, lastY, startDist = 0;
             let isDragging = false;
-            let startDist = 0; // Для зума пальцами
 
-            function updateTransform() {
+            function update() {
+                // Ограничения сдвига, чтобы не видеть пустоту
+                const limitX = (map.offsetWidth * scale - window.innerWidth) / 2;
+                const limitY = (map.offsetHeight * scale - window.innerHeight) / 2;
+                
+                // Принудительно держим в границах
+                if (posX > limitX) posX = limitX;
+                if (posX < -limitX) posX = -limitX;
+                if (posY > limitY) posY = limitY;
+                if (posY < -limitY) posY = -limitY;
+
                 map.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             }
-            updateTransform();
 
-            // ПЕРЕМЕЩЕНИЕ
-            const onStart = (e) => {
+            // ПЕРЕМЕЩЕНИЕ И ЗУМ
+            const start = (e) => {
                 if (e.touches && e.touches.length === 2) {
                     startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 } else {
@@ -126,39 +132,35 @@
                 }
             };
 
-            const onMove = (e) => {
+            const move = (e) => {
                 if (e.touches && e.touches.length === 2) {
-                    // ЗУМ ПАЛЬЦАМИ
                     const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    const delta = dist / startDist;
-                    scale = Math.min(Math.max(0.2, scale * delta), 1.5);
+                    scale = Math.min(Math.max(0.6, scale * (dist / startDist)), 1.8);
                     startDist = dist;
-                    updateTransform();
+                    update();
                 } else if (isDragging) {
-                    // ПЕРЕМЕЩЕНИЕ
                     const t = e.touches ? e.touches[0] : e;
                     posX += t.clientX - lastX;
                     posY += t.clientY - lastY;
                     lastX = t.clientX; lastY = t.clientY;
-                    updateTransform();
+                    update();
                 }
             };
 
-            const onEnd = () => { isDragging = false; };
-
-            // ЗУМ КОЛЕСИКОМ
+            // Колесико мыши
             window.addEventListener('wheel', (e) => {
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                scale = Math.min(Math.max(0.2, scale * delta), 1.5);
-                updateTransform();
+                scale = Math.min(Math.max(0.6, scale + (e.deltaY > 0 ? -0.1 : 0.1)), 1.8);
+                update();
             });
 
-            window.addEventListener('mousedown', onStart);
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onEnd);
-            window.addEventListener('touchstart', onStart);
-            window.addEventListener('touchmove', onMove, { passive: false });
-            window.addEventListener('touchend', onEnd);
+            window.addEventListener('touchstart', start);
+            window.addEventListener('touchmove', move, { passive: false });
+            window.addEventListener('touchend', () => isDragging = false);
+            window.addEventListener('mousedown', start);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', () => isDragging = false);
+            
+            update(); // Применить начальное состояние
         }
     </script>
 </body>
