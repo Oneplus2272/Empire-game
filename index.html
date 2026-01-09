@@ -15,14 +15,15 @@
         /* ЗАГРУЗОЧНЫЙ ЭКРАН */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            /* Добавил темно-серый цвет как заглушку, если bg.jpg не найден */
             background: #1a1a1a url('bg.jpg') no-repeat center center; 
             background-size: cover;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             z-index: 100; transition: opacity 0.8s ease;
         }
 
-        .loader-bar { width: 70%; height: 8px; background: rgba(0,0,0,0.6); border: 1px solid #ffd700; margin-bottom: 60px; border-radius: 10px; position: relative; }
-        .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); transition: width 0.1s; }
+        .loader-bar { width: 70%; height: 8px; background: rgba(0,0,0,0.6); border: 1px solid #ffd700; margin-bottom: 60px; border-radius: 10px; }
+        .loader-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); }
         .percent-text { color: #ffd700; margin-bottom: 10px; font-size: 20px; text-shadow: 2px 2px 4px #000; }
 
         /* ИГРОВОЙ ЭКРАН */
@@ -37,24 +38,24 @@
         }
 
         .character-img {
-            height: 100vh; width: auto; /* Картинка всегда во всю высоту */
+            height: 100vh; width: auto; 
             max-width: 100vw; object-fit: contain;
         }
 
-        /* ТЕКСТ ТЕПЕРЬ ПРИВЯЗАН К ЦЕНТРУ ЭКРАНА С ПРАВИЛЬНЫМ СМЕЩЕНИЕМ */
+        /* ПОДНЯЛИ ТЕКСТ ВЫШЕ (изменили top с 82% на 78%) */
         .dialog-container {
             position: absolute;
-            top: 82%; /* Регулируй этот параметр (80-85%), чтобы попасть в рамку */
+            top: 78%; 
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 85%;
+            width: 80%;
             text-align: center;
             z-index: 10;
         }
 
         .dialog-text {
             color: #f0e6d2; font-size: 14px; line-height: 1.3;
-            text-shadow: 2px 2px 3px #000; margin-bottom: 10px;
+            text-shadow: 2px 2px 3px #000; margin-bottom: 12px;
             font-weight: bold; min-height: 45px;
         }
 
@@ -99,7 +100,7 @@
 
         let progress = 0;
         const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 7) + 2;
+            progress += Math.floor(Math.random() * 5) + 2;
             if (progress >= 100) {
                 progress = 100;
                 clearInterval(interval);
@@ -107,7 +108,7 @@
             }
             document.getElementById('progress').style.width = progress + '%';
             document.getElementById('percent').innerText = progress + '%';
-        }, 100);
+        }, 80);
 
         function showGame() {
             const ls = document.getElementById('loading-screen');
@@ -120,8 +121,8 @@
         }
 
         function nextStep() {
-            // Сюда мы вставим следующий диалог или переход к карте
-            alert("Командующий, Кай принял командование! Пора строить город.");
+            // Переход к следующему этапу
+            alert("Командующий, Кай готов к действию!");
         }
     </script>
 </body>
