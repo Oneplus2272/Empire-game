@@ -3,89 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empire: Coordinate Picker</title>
+    <title>Empire: Fix View</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; }
 
-        /* ФОН ЗАГРУЗКИ (На весь экран для калибровки) */
+        /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: url('1000007369.png') no-repeat center center;
-            background-size: contain; z-index: 2000;
+            background: #221100 url('1000007369.png') no-repeat center center;
+            background-size: contain; 
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
         }
 
-        /* КАРТА (Проверяем видимость) */
-        #game-map {
+        /* Тестовая область для шкалы */
+        #debug-bar {
+            position: absolute;
+            bottom: 10%; left: 15%; width: 70%; height: 20px;
+            border: 2px dashed red; pointer-events: none;
+        }
+
+        #fill {
+            position: absolute; bottom: 0; left: 0; width: 0%; height: 100%;
+            background: linear-gradient(to right, #b8860b, #ffd700);
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        /* --- КАРТА (ИГРОВОЙ МИР) --- */
+        #map-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('map.png') no-repeat center center;
+            background: #002200 url('map.png') no-repeat center center;
             background-size: cover; z-index: 1;
         }
 
-        /* ПОЛОСКА (ВИЗУАЛЬНАЯ ПРОВЕРКА) */
-        #fill {
-            position: absolute;
-            background: rgba(255, 215, 0, 0.7);
-            height: 10px; /* Пока просто полоска для теста */
-            border: 1px solid white;
-            pointer-events: none;
+        /* ИНТЕРФЕЙС КАЯ */
+        .kai-anchor {
+            position: absolute; top: 10px; left: 10px;
+            width: 120px; height: 140px; z-index: 100;
+            background: rgba(0,0,0,0.3) url('1000007362.png') no-repeat center;
+            background-size: contain;
         }
 
-        /* ИНФО-ПАНЕЛЬ (ДЛЯ ТЕБЯ) */
-        #coords-info {
-            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: lime; padding: 15px;
-            z-index: 3000; border-radius: 10px; text-align: center;
-            pointer-events: none; width: 80%;
+        .kai-face {
+            position: absolute; top: 15%; left: 12%; width: 75%; height: 50%;
+            overflow: hidden;
+        }
+        .kai-face img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* РЕСУРСЫ */
+        .res-line {
+            position: absolute; top: 10px; left: 140px; 
+            display: flex; gap: 10px; z-index: 110;
+        }
+        .res-box { text-align: center; color: #ffd700; font-weight: bold; font-size: 14px; }
+        .res-img { width: 50px; height: 50px; background-size: contain; background-repeat: no-repeat; }
+
+        /* ДИАЛОГ (СТАРЫЙ СТИЛЬ) */
+        #dialog {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 80%; background: rgba(0,0,0,0.8); border: 1px solid #b8860b;
+            color: white; padding: 15px; border-radius: 8px; text-align: center; z-index: 150;
         }
     </style>
 </head>
 <body>
 
-    <div id="coords-info">
-        Кликни в НАЧАЛО шкалы, потом в КОНЕЦ.<br>
-        <span id="output">Ожидание клика...</span>
+    <div id="loading-screen">
+        <div id="debug-bar"><div id="fill"></div></div>
     </div>
 
-    <div id="loading-screen">
-        <div id="fill"></div>
+    <div id="map-layer"></div>
+
+    <div class="kai-anchor">
+        <div class="kai-face"><img src="marshal_blank.png"></div>
     </div>
-    
-    <div id="game-map"></div>
+
+    <div class="res-line">
+        <div class="res-box"><div class="res-img" style="background-image: url('icon_bread.png')"></div>500</div>
+        <div class="res-box"><div class="res-img" style="background-image: url('icon_wood.png')"></div>500</div>
+        <div class="res-box"><div class="res-img" style="background-image: url('icon_stone.png')"></div>500</div>
+    </div>
+
+    <div id="dialog">Нажми на экран, если загрузка зависла.</div>
 
     <script>
-        let clicks = [];
-        const screen = document.getElementById('loading-screen');
-        const output = document.getElementById('output');
-        const fill = document.getElementById('fill');
-
-        screen.onclick = function(e) {
-            // Считаем координаты в процентах от экрана
-            let x = (e.clientX / window.innerWidth) * 100;
-            let y = (e.clientY / window.innerHeight) * 100;
-            
-            clicks.push({x, y});
-
-            if (clicks.length === 1) {
-                output.innerText = `Начало по X: ${x.toFixed(2)}%. Теперь кликни в конец шкалы.`;
-                fill.style.left = x + "%";
-                fill.style.top = y + "%";
-                fill.style.width = "5px";
-            } 
-            else if (clicks.length === 2) {
-                let startX = clicks[0].x;
-                let endX = clicks[1].x;
-                let width = endX - startX;
-                let top = clicks[0].y;
-
-                output.innerHTML = `Квадрат Кая готов! Координаты для шкалы:<br>
-                <b>LEFT: ${startX.toFixed(2)}%</b><br>
-                <b>WIDTH: ${width.toFixed(2)}%</b><br>
-                <b>TOP: ${top.toFixed(2)}%</b>`;
-
-                fill.style.width = width + "%";
-                clicks = []; // Сброс для новой пробы
+        let prg = 0;
+        let loader = setInterval(() => {
+            prg += 2;
+            document.getElementById('fill').style.width = prg + '%';
+            if(prg >= 100) {
+                clearInterval(loader);
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                }, 500);
             }
-        }
+        }, 30);
     </script>
 </body>
 </html>
