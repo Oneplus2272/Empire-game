@@ -2,77 +2,62 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Empire: Rise of Legends</title>
+    <title>Empire Game</title>
     <style>
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'serif'; }
 
         /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('loading_bg.png') no-repeat center center; /* ТВОЙ ФОН */
-            background-size: cover;
-            z-index: 1000;
+            background: url('loading_screen_marshal_kai.png') no-repeat center center;
+            background-size: cover; z-index: 1000;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             transition: opacity 1s ease-in-out;
         }
+        .loader-bar { width: 40%; height: 15px; background: rgba(0,0,0,0.8); border: 1px solid #ffd700; border-radius: 10px; margin-bottom: 100px; overflow: hidden; }
+        .loader-fill { width: 0%; height: 100%; background: #ffd700; transition: width 0.3s; }
 
-        .loader-bar {
-            width: 50%; height: 15px; background: rgba(0,0,0,0.8);
-            border: 1px solid #ffd700; border-radius: 20px; margin-bottom: 60px; overflow: hidden;
+        /* --- ИГРОВОЙ МИР --- */
+        #game-ui { width: 100%; height: 100%; background: url('map.png') no-repeat center center; background-size: cover; position: relative; }
+
+        /* КАЙ В ВЕРХНЕМ ЛЕВОМ УГЛУ */
+        .kai-avatar-zone {
+            position: absolute; top: 20px; left: 20px;
+            display: flex; align-items: center; gap: 15px; z-index: 50;
         }
-
-        .loader-fill { width: 0%; height: 100%; background: #ffd700; transition: width 0.2s; }
-
-        /* --- ГЛАВНЫЙ ЭКРАН --- */
-        #main-ui {
-            width: 100%; height: 100%;
-            background: url('city_background.png') no-repeat center center; /* ФОН ГОРОДА */
-            background-size: cover;
-            position: relative;
-        }
-
-        /* Твоя панель ресурсов сверху */
-        .top-panel {
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            width: 1000px; height: 120px;
-            background: url('resource_bar_panel.png') no-repeat center; /* ТВОЯ ПАНЕЛЬ */
-            background-size: contain;
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 0 40px;
-        }
-
-        .res-item { display: flex; align-items: center; gap: 5px; color: #ffd700; font-weight: bold; }
-        .res-icon { width: 30px; height: 30px; object-fit: contain; }
-
-        /* Твоё диалоговое окно */
-        #dialog-box {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 800px; height: 200px;
-            background: url('dialog_panel.png') no-repeat center; /* ТВОЯ ПАНЕЛЬ ДИАЛОГА */
-            background-size: 100% 100%;
-            display: flex; align-items: center; padding: 20px;
-        }
-
         .kai-portrait {
-            width: 140px; height: 140px;
-            margin-left: 20px;
-            background: url('kai_portrait.png') no-repeat center; /* ПОРТРЕТ КАЯ */
+            width: 100px; height: 100px;
+            background: url('marshal_blank.png') no-repeat center;
+            background-size: contain; border: 2px solid #ffd700; border-radius: 50%;
+        }
+        .kai-info { color: white; text-shadow: 2px 2px 4px #000; }
+        .kai-name { font-size: 20px; font-weight: bold; color: #ffaa00; }
+
+        /* РЕСУРСЫ НАВЕРХУ ПО ЦЕНТРУ */
+        .top-res-center {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 900px; height: 120px;
+            background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain;
+            display: flex; justify-content: center; align-items: center; gap: 30px; padding-bottom: 15px;
         }
+        .res-item { display: flex; flex-direction: column; align-items: center; width: 80px; }
+        .res-icon { width: 35px; height: 35px; object-fit: contain; }
+        .res-val { color: #ffd700; font-size: 14px; font-weight: bold; margin-top: 5px; }
 
-        .dialog-text-area {
-            flex: 1; padding: 0 30px; color: white; font-family: 'serif';
+        /* ДИАЛОГОВОЕ ОКНО ВНИЗУ */
+        .bottom-dialog {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 180px;
+            background: url('interface_kai_frame.png') no-repeat center;
+            background-size: 100% 100%;
+            display: flex; align-items: center; padding: 0 50px; color: white;
         }
-
-        .character-name { color: #ffaa00; font-size: 22px; margin-bottom: 5px; font-weight: bold; }
-        .text-line { font-size: 18px; line-height: 1.3; }
-
+        .text-box { font-size: 20px; line-height: 1.4; }
         .btn-next {
-            background: none; border: 1px solid #ffd700; color: #ffd700;
-            cursor: pointer; padding: 5px 15px; position: absolute; bottom: 25px; right: 50px;
+            position: absolute; bottom: 25px; right: 40px;
+            background: rgba(0,0,0,0.6); color: #ffd700; border: 1px solid #ffd700;
+            padding: 8px 15px; cursor: pointer; font-weight: bold;
         }
     </style>
 </head>
@@ -82,51 +67,59 @@
         <div class="loader-bar"><div id="fill" class="loader-fill"></div></div>
     </div>
 
-    <div id="main-ui">
-        <div class="top-panel">
-            <div class="res-item"><img src="icon_bread.png" class="res-icon"><span id="b-val">1250</span></div>
-            <div class="res-item"><img src="icon_wood.png" class="res-icon"><span id="w-val">5000</span></div>
-            <div class="res-item"><img src="icon_stone.png" class="res-icon"><span id="s-val">3200</span></div>
-            <div class="res-item"><img src="icon_iron_ore.png" class="res-icon"><span id="i-val">850</span></div>
-            <div class="res-item"><img src="icon_silver_ingot.png" class="res-icon"><span id="si-val">120</span></div>
+    <div id="game-ui">
+        <div class="kai-avatar-zone">
+            <div class="kai-portrait"></div>
+            <div class="kai-info">
+                <div class="kai-name">Маршал Кай</div>
+                <div style="font-size: 12px;">Советник империи</div>
+            </div>
         </div>
 
-        <div id="dialog-box">
-            <div class="kai-portrait"></div>
-            <div class="dialog-text-area">
-                <div class="character-name">Кай</div>
-                <div id="typewriter" class="text-line">Мой Лорд! Вы наконец очнулись. Взгляните — это всё, что осталось от нашего величия. Но мы всё исправим.</div>
-                <button class="btn-next" onclick="nextPhrase()">Далее</button>
-            </div>
+        <div class="top-res-center">
+            <div class="res-item"><img src="icon_bread.png" class="res-icon"><span class="res-val">1,250</span></div>
+            <div class="res-item"><img src="icon_wood.png" class="res-icon"><span class="res-val">5,000</span></div>
+            <div class="res-item"><img src="icon_stone.png" class="res-icon"><span class="res-val">3,200</span></div>
+            <div class="res-item"><img src="icon_iron_ore.png" class="res-icon"><span class="res-val">850</span></div>
+            <div class="res-item"><img src="icon_silver_ingot.png" class="res-icon"><span class="res-val">120</span></div>
+            <div class="res-item"><img src="icon_gold_chest.png" class="res-icon"><span class="res-val">50</span></div>
+        </div>
+
+        <div id="dialog-layer" class="bottom-dialog">
+            <div id="main-text" class="text-box">Мой Лорд! Я перебрался в левый угол, чтобы не мешать обзору. Ресурсы теперь в центре. Мы готовы начинать?</div>
+            <button class="btn-next" onclick="next()">Далее</button>
         </div>
     </div>
 
     <script>
-        // Загрузка
+        // Скрипт загрузки
         let p = 0;
         let itv = setInterval(() => {
-            p += 5;
+            p += Math.random() * 12;
+            if(p > 100) p = 100;
             document.getElementById('fill').style.width = p + '%';
             if(p >= 100) {
                 clearInterval(itv);
-                setTimeout(() => { document.getElementById('loading-screen').style.opacity = '0'; 
-                setTimeout(() => document.getElementById('loading-screen').style.remove(), 1000); }, 500);
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
+                }, 500);
             }
-        }, 100);
+        }, 200);
 
         // Сюжет
-        const story = [
-            "Видите панель сверху? Это наши запасы. Дерева и камня хватит на первую ратушу.",
-            "Я подготовил чертежи. Как только вы отдадите приказ, рабочие приступят к делу.",
-            "Начнем строительство?"
+        const dialogs = [
+            "Эти запасы наверху пригодятся нам для строительства первой Ратуши.",
+            "Нажмите на карту, чтобы выбрать место для застройки.",
+            "Вперёд, к величию!"
         ];
-        let currentIdx = 0;
-        function nextPhrase() {
-            if(currentIdx < story.length) {
-                document.getElementById('typewriter').innerText = story[currentIdx];
-                currentIdx++;
+        let idx = 0;
+        function next() {
+            if(idx < dialogs.length) {
+                document.getElementById('main-text').innerText = dialogs[idx];
+                idx++;
             } else {
-                document.getElementById('dialog-box').style.display = 'none';
+                document.getElementById('dialog-layer').style.display = 'none';
             }
         }
     </script>
