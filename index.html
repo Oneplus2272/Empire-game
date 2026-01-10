@@ -3,100 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empire: Fix View</title>
+    <title>Empire: Rise of Legends</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
 
         /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #221100 url('1000007369.png') no-repeat center center;
-            background-size: contain; 
-            z-index: 2000; display: flex; align-items: center; justify-content: center;
-        }
-
-        /* Тестовая область для шкалы */
-        #debug-bar {
-            position: absolute;
-            bottom: 10%; left: 15%; width: 70%; height: 20px;
-            border: 2px dashed red; pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('1000007369.png') no-repeat center center;
+            background-size: contain; background-color: #000;
+            z-index: 2000; transition: opacity 1s ease-in-out;
         }
 
         #fill {
-            position: absolute; bottom: 0; left: 0; width: 0%; height: 100%;
+            position: absolute;
+            bottom: 4.3%; /* Твоя базовая координата */
+            left: 13.4%;
+            height: 3.5%;
+            width: 0%;
             background: linear-gradient(to right, #b8860b, #ffd700);
-            box-shadow: 0 0 10px #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            border-radius: 4px;
         }
 
-        /* --- КАРТА (ИГРОВОЙ МИР) --- */
-        #map-layer {
+        /* --- КАРТА --- */
+        #map-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #002200 url('map.png') no-repeat center center;
+            background: url('map.png') no-repeat center center;
             background-size: cover; z-index: 1;
         }
 
-        /* ИНТЕРФЕЙС КАЯ */
-        .kai-anchor {
+        /* --- ИНТЕРФЕЙС КАЯ --- */
+        .kai-hud {
             position: absolute; top: 10px; left: 10px;
-            width: 120px; height: 140px; z-index: 100;
-            background: rgba(0,0,0,0.3) url('1000007362.png') no-repeat center;
-            background-size: contain;
+            width: 140px; height: 165px; z-index: 100;
         }
-
-        .kai-face {
-            position: absolute; top: 15%; left: 12%; width: 75%; height: 50%;
-            overflow: hidden;
+        .kai-frame {
+            position: absolute; width: 100%; height: 100%;
+            background: url('1000007362.png') no-repeat center;
+            background-size: contain; z-index: 5;
         }
-        .kai-face img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* РЕСУРСЫ */
-        .res-line {
-            position: absolute; top: 10px; left: 140px; 
-            display: flex; gap: 10px; z-index: 110;
+        .kai-img {
+            position: absolute; top: 12%; left: 11%; width: 78%; height: 52%;
+            z-index: 2; overflow: hidden;
         }
-        .res-box { text-align: center; color: #ffd700; font-weight: bold; font-size: 14px; }
-        .res-img { width: 50px; height: 50px; background-size: contain; background-repeat: no-repeat; }
+        .kai-img img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* ДИАЛОГ (СТАРЫЙ СТИЛЬ) */
+        /* --- РЕСУРСЫ --- */
+        .res-container {
+            position: absolute; top: 15px; left: 160px;
+            display: flex; gap: 15px; z-index: 90;
+        }
+        .res-unit { display: flex; flex-direction: column; align-items: center; width: 55px; }
+        .res-icon { width: 50px; height: 50px; background-size: contain; background-repeat: no-repeat; background-position: center; }
+        .res-val { color: #ffd700; font-weight: bold; font-size: 16px; text-shadow: 2px 2px 2px #000; }
+
+        /* --- ДИАЛОГ --- */
         #dialog {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 80%; background: rgba(0,0,0,0.8); border: 1px solid #b8860b;
-            color: white; padding: 15px; border-radius: 8px; text-align: center; z-index: 150;
+            width: 80%; max-width: 600px; padding: 20px;
+            background: rgba(0,0,0,0.85); border: 1px solid #b8860b;
+            color: white; border-radius: 10px; text-align: center; z-index: 150;
         }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div id="debug-bar"><div id="fill"></div></div>
+        <div id="fill"></div>
     </div>
 
-    <div id="map-layer"></div>
+    <div id="map-bg"></div>
 
-    <div class="kai-anchor">
-        <div class="kai-face"><img src="marshal_blank.png"></div>
+    <div class="kai-hud">
+        <div class="kai-frame"></div>
+        <div class="kai-img"><img src="marshal_blank.png"></div>
     </div>
 
-    <div class="res-line">
-        <div class="res-box"><div class="res-img" style="background-image: url('icon_bread.png')"></div>500</div>
-        <div class="res-box"><div class="res-img" style="background-image: url('icon_wood.png')"></div>500</div>
-        <div class="res-box"><div class="res-img" style="background-image: url('icon_stone.png')"></div>500</div>
+    <div class="res-container">
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_bread.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_wood.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_stone.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_iron_ore.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_silver_ingot.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_gold_chest.png');"></div><div class="res-val">500</div></div>
     </div>
 
-    <div id="dialog">Нажми на экран, если загрузка зависла.</div>
+    <div id="dialog">Маршал Кай: "Мой Лорд, мы вернулись к классическому виду. Все системы готовы!"</div>
 
     <script>
         let prg = 0;
         let loader = setInterval(() => {
             prg += 2;
-            document.getElementById('fill').style.width = prg + '%';
+            document.getElementById('fill').style.width = (prg * 0.6) + '%';
             if(prg >= 100) {
                 clearInterval(loader);
                 setTimeout(() => {
-                    document.getElementById('loading-screen').style.display = 'none';
+                    const ls = document.getElementById('loading-screen');
+                    ls.style.opacity = '0';
+                    setTimeout(() => ls.style.display = 'none', 1000);
                 }, 500);
             }
-        }, 30);
+        }, 50);
     </script>
 </body>
 </html>
