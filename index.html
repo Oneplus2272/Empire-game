@@ -2,116 +2,118 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Empire Game</title>
+    <title>Empire: Rise of Legends</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'serif'; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Georgia', serif; }
 
-        /* --- ЭКРАН ЗАГРУЗКИ --- */
+        /* --- ЗАГРУЗОЧНЫЙ ЭКРАН --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
-            background-size: cover; z-index: 1000;
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            background-size: 80%; /* Немного уменьшил, как ты просил */
+            z-index: 1000; display: flex; justify-content: center; align-items: flex-end;
             transition: opacity 1s ease-in-out;
         }
-        .loader-bar { width: 40%; height: 15px; background: rgba(0,0,0,0.8); border: 1px solid #ffd700; border-radius: 10px; margin-bottom: 100px; overflow: hidden; }
-        .loader-fill { width: 0%; height: 100%; background: #ffd700; transition: width 0.3s; }
 
-        /* --- ИГРОВОЙ МИР (КАРТА) --- */
+        /* Твоя пустая шкала (фон) и прогресс */
+        .loader-container {
+            width: 400px; height: 40px; 
+            background: url('loading_bar_empty.png') no-repeat center; /* ТВОЯ ПУСТАЯ ШКАЛА */
+            background-size: contain; margin-bottom: 100px; position: relative;
+        }
+        .loader-fill {
+            position: absolute; top: 10px; left: 15px; /* Подгони под вырез своей шкалы */
+            height: 20px; width: 0%;
+            background: linear-gradient(90deg, #8b4513, #ffd700);
+            box-shadow: 0 0 10px #ffd700; transition: width 0.3s;
+        }
+
+        /* --- ИГРОВОЙ ЭКРАН --- */
         #game-ui { 
             width: 100%; height: 100%; 
-            background: url('map.png') no-repeat center center; /* ТВОЯ КАРТА */
-            background-size: cover; 
+            background: url('map.png') no-repeat center center; background-size: cover; 
             position: relative; 
         }
 
-        /* РАМКА С КАЕМ В ЛЕВОМ ВЕРХНЕМ УГЛУ */
-        .kai-interface-zone {
-            position: absolute; 
-            top: 10px; 
-            left: 10px;
-            width: 350px; 
-            height: 180px;
-            background: url('interface_kai_frame.png') no-repeat center; /* ТВОЯ РАМКА */
-            background-size: contain;
-            display: flex;
-            align-items: center;
-            padding-left: 25px;
-            z-index: 100;
+        /* КАЙ В РАМКЕ (МАСКА) - ВЕРХНИЙ ЛЕВЫЙ УГОЛ */
+        .kai-container {
+            position: absolute; top: 10px; left: 10px;
+            width: 280px; height: 160px;
+            background: url('interface_kai_frame.png') no-repeat center;
+            background-size: contain; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
         }
-        .kai-portrait {
-            width: 110px; height: 110px;
-            background: url('marshal_blank.png') no-repeat center; /* ПОРТРЕТ */
-            background-size: contain;
+        .kai-mask {
+            width: 95px; height: 95px; /* Размер выреза в рамке */
+            border-radius: 50%; /* Чтобы вписаться в круглый вырез */
+            overflow: hidden;
+            position: absolute; left: 35px; top: 32px; /* Позиция лица в рамке */
         }
-        .kai-label {
-            color: #ffaa00; font-weight: bold; font-size: 18px;
-            margin-left: 10px; text-shadow: 2px 2px 2px #000;
-        }
+        .kai-mask img { width: 100%; height: 100%; object-fit: cover; }
 
         /* РЕСУРСЫ НАВЕРХУ ПО ЦЕНТРУ */
         .top-res-center {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 900px; height: 120px;
+            width: 900px; height: 100px;
             background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain;
-            display: flex; justify-content: center; align-items: center; gap: 30px; padding-bottom: 15px;
-            z-index: 90;
+            display: flex; justify-content: center; align-items: center; gap: 40px;
+            z-index: 90; padding-bottom: 20px;
         }
-        .res-item { display: flex; flex-direction: column; align-items: center; width: 80px; }
-        .res-icon { width: 35px; height: 35px; object-fit: contain; }
-        .res-val { color: #ffd700; font-size: 14px; font-weight: bold; margin-top: 5px; }
+        .res-text {
+            color: #ffd700; font-weight: bold; font-size: 15px;
+            text-shadow: 1px 1px 2px #000;
+        }
 
-        /* ДИАЛОГОВОЕ ОКНО (ТЕКСТ) ВНИЗУ */
+        /* ДИАЛОГ ВНИЗУ */
         #dialog-box {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 800px; height: 150px;
-            background: rgba(0, 0, 0, 0.8); /* Если есть картинка для текста, замени здесь */
-            border: 2px solid #8b4513; border-radius: 15px;
-            display: flex; align-items: center; padding: 20px 40px; color: white;
-            z-index: 110;
+            width: 700px; height: 120px;
+            background: rgba(0,0,0,0.85); border: 1px solid #ffd700; border-radius: 10px;
+            display: flex; align-items: center; padding: 20px; color: white; z-index: 110;
         }
-        .text-box { font-size: 19px; line-height: 1.4; }
         .btn-next {
-            position: absolute; bottom: 15px; right: 30px;
-            background: #5a4a3a; color: #ffd700; border: 1px solid #ffd700;
-            padding: 5px 15px; cursor: pointer; font-weight: bold;
+            position: absolute; bottom: 10px; right: 20px;
+            background: #4a3a2a; color: #ffd700; border: 1px solid #ffd700;
+            padding: 5px 15px; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div class="loader-bar"><div id="fill" class="loader-fill"></div></div>
+        <div class="loader-container">
+            <div id="fill" class="loader-fill"></div>
+        </div>
     </div>
 
     <div id="game-ui">
-        <div class="kai-interface-zone">
-            <div class="kai-portrait"></div>
-            <div class="kai-label">Маршал Кай</div>
+        <div class="kai-container">
+            <div class="kai-mask">
+                <img src="marshal_blank.png" alt="Кай">
+            </div>
+            <div style="position:absolute; right:40px; top:65px; color:#ffaa00; font-weight:bold;">Кай</div>
         </div>
 
         <div class="top-res-center">
-            <div class="res-item"><img src="icon_bread.png" class="res-icon"><span class="res-val">1,250</span></div>
-            <div class="res-item"><img src="icon_wood.png" class="res-icon"><span class="res-val">5,000</span></div>
-            <div class="res-item"><img src="icon_stone.png" class="res-icon"><span class="res-val">3,200</span></div>
-            <div class="res-item"><img src="icon_iron_ore.png" class="res-icon"><span class="res-val">850</span></div>
-            <div class="res-item"><img src="icon_silver_ingot.png" class="res-icon"><span class="res-val">120</span></div>
-            <div class="res-item"><img src="icon_gold_chest.png" class="res-icon"><span class="res-val">50</span></div>
+            <div class="res-text">ХЛЕБ: <span id="r1">500</span></div>
+            <div class="res-text">ДЕРЕВО: <span id="r2">500</span></div>
+            <div class="res-text">КАМЕНЬ: <span id="r3">500</span></div>
+            <div class="res-text">ЖЕЛЕЗО: <span id="r4">500</span></div>
+            <div class="res-text">СЕРЕБРО: <span id="r5">500</span></div>
         </div>
 
         <div id="dialog-box">
-            <div id="main-text" class="text-box">Мой Лорд! Карта (`map.png`) перед вами. Я занял позицию в левом верхнем углу в рамке `interface_kai_frame.png`.</div>
+            <div id="main-text">Мой Лорд, всё готово. Ресурсы на складах (по 500), я в левом углу. Начинаем постройку?</div>
             <button class="btn-next" onclick="next()">Далее</button>
         </div>
     </div>
 
     <script>
-        // Скрипт загрузки
+        // Загрузка (твоя пустая шкала наполняется)
         let p = 0;
         let itv = setInterval(() => {
-            p += 8;
-            if(p > 100) p = 100;
+            p += 5;
             document.getElementById('fill').style.width = p + '%';
             if(p >= 100) {
                 clearInterval(itv);
@@ -122,20 +124,9 @@
             }
         }, 150);
 
-        // Тексты
-        const dialogs = [
-            "Взгляните на карту. Нам нужно выбрать место для строительства казарм.",
-            "Ресурсная панель сверху показывает наше состояние. Дерева хватит.",
-            "Жду ваших приказов!"
-        ];
-        let idx = 0;
         function next() {
-            if(idx < dialogs.length) {
-                document.getElementById('main-text').innerText = dialogs[idx];
-                idx++;
-            } else {
-                document.getElementById('dialog-box').style.display = 'none';
-            }
+            document.getElementById('main-text').innerText = "Лесопилка потребует 200 дерева. Прикажете начать?";
+            // Здесь можно добавить логику уменьшения ресурса
         }
     </script>
 </body>
