@@ -6,7 +6,7 @@
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'serif'; }
 
-        /* --- ЗАГРУЗОЧНЫЙ ЭКРАН --- */
+        /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
@@ -15,118 +15,119 @@
             transition: opacity 1s ease-in-out;
         }
 
-        /* Контейнер для полоски, наложенный прямо на пустую шкалу в арте */
-        .loader-wrapper {
-            position: relative;
-            width: 100%; height: 100%; /* Весь экран, чтобы точно позиционировать */
-            pointer-events: none;
-        }
-
-        .loader-fill {
+        /* ПОЛОСКА ВНУТРИ ТВОЕЙ ШКАЛЫ (Позиционирование через проценты экрана) */
+        #fill {
             position: absolute;
-            /* Позиция подобрана под нижнюю пустую шкалу на твоем арте */
-            bottom: 6.5%; left: 19%; 
-            width: 0%; height: 4.5%;
-            background: linear-gradient(90deg, #d4af37, #f9e4b7);
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
-            border-radius: 20px;
-            transition: width 0.3s linear;
+            bottom: 6.8%; /* РЕГУЛИРУЙ ЭТО: выше/ниже */
+            left: 19.5%;  /* РЕГУЛИРУЙ ЭТО: левее/правее */
+            height: 4.2%; /* Толщина полоски */
+            width: 0%;    /* Начало загрузки */
+            background: linear-gradient(90deg, #d4af37, #fff); /* Золотистый цвет */
+            box-shadow: 0 0 15px #ffd700;
+            border-radius: 5px;
+            transition: width 0.3s ease-out;
         }
 
-        /* --- ИГРОВОЙ МИР --- */
-        #game-ui { 
+        /* --- ИГРОВОЙ ЭКРАН --- */
+        #game-world { 
             width: 100%; height: 100%; 
             background: url('map.png') no-repeat center center; 
             background-size: cover; position: relative; 
         }
 
-        /* КАЙ В ТВОЕЙ РАМКЕ (МАСКА) */
+        /* КВАДРАТНЫЙ КАЙ В РАМКЕ */
         .kai-hud {
             position: absolute; top: 10px; left: 10px;
-            width: 300px; height: 150px;
+            width: 280px; height: 150px;
             background: url('interface_kai_frame.png') no-repeat center;
             background-size: contain; z-index: 100;
+            background-color: transparent !important; /* УБИРАЕМ ЛЮБОЙ ФОН */
         }
-        .kai-mask {
+        .kai-square-mask {
             position: absolute;
-            top: 25px; left: 32px; /* Подгонка под вырез в interface_kai_frame.png */
-            width: 95px; height: 95px;
+            top: 25px; left: 30px; /* ПОДГОНИ ПОД КВАДРАТ В РАМКЕ */
+            width: 90px; height: 90px;
             overflow: hidden;
-            border-radius: 50%; /* Создаем круглую маску */
+            background-color: transparent;
         }
-        .kai-mask img { width: 100%; height: 100%; object-fit: cover; }
+        .kai-square-mask img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* ПАНЕЛЬ РЕСУРСОВ (ЧИСТАЯ, БЕЗ ФОНА) */
-        .resource-header {
+        /* ПАНЕЛЬ РЕСУРСОВ (БЕЗ ФОНА И С ТОЧНЫМ ТЕКСТОМ) */
+        .res-panel-container {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 900px; height: 100px;
+            width: 1000px; height: 120px;
             background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain;
-            background-color: transparent; /* Убираем любой серый фон */
-            display: flex; justify-content: center; align-items: center; 
-            gap: 40px; padding-bottom: 25px; z-index: 90;
-        }
-        .res-text {
-            color: #ffd700; font-weight: bold; font-size: 16px;
-            text-shadow: 2px 2px 2px #000;
+            background-color: transparent !important; /* УБИРАЕМ ФОН */
+            z-index: 90;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* ТЕКСТ ДИАЛОГА */
+        /* СЕТКА ДЛЯ ТЕКСТА РЕСУРСОВ (Чтобы попадали в ячейки панели) */
+        .res-grid {
+            display: flex;
+            gap: 40px; /* РЕГУЛИРУЙ РАССТОЯНИЕ МЕЖДУ СЛОВАМИ */
+            padding-bottom: 30px; /* ПОДНИМИ/ОПУСТИ ТЕКСТ ВНУТРИ ПАНЕЛИ */
+        }
+
+        .res-text {
+            color: #ffd700; font-weight: bold; font-size: 14px;
+            text-shadow: 2px 2px 2px #000;
+            text-transform: uppercase;
+        }
+
+        /* ДИАЛОГОВОЕ ОКНО */
         #dialog-box {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 750px; padding: 20px;
-            background: rgba(0,0,0,0.8); border: 2px solid #8b4513;
-            color: white; border-radius: 15px; text-align: center;
+            width: 700px; padding: 25px;
+            background: rgba(0,0,0,0.85); border: 2px solid #8b4513;
+            color: white; border-radius: 12px; text-align: center;
         }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div class="loader-wrapper">
-            <div id="fill" class="loader-fill"></div>
-        </div>
+        <div id="fill"></div>
     </div>
 
-    <div id="game-ui">
+    <div id="game-world">
         <div class="kai-hud">
-            <div class="kai-mask">
+            <div class="kai-square-mask">
                 <img src="marshal_blank.png" alt="Marshal Kai">
             </div>
         </div>
 
-        <div class="resource-header">
-            <div class="res-text">ХЛЕБ: 500</div>
-            <div class="res-text">ДЕРЕВО: 500</div>
-            <div class="res-text">КАМЕНЬ: 500</div>
-            <div class="res-text">ЖЕЛЕЗО: 500</div>
-            <div class="res-text">СЕРЕБРО: 500</div>
+        <div class="res-panel-container">
+            <div class="res-grid">
+                <div class="res-text">ХЛЕБ: 500</div>
+                <div class="res-text">ДЕРЕВО: 500</div>
+                <div class="res-text">КАМЕНЬ: 500</div>
+                <div class="res-text">ЖЕЛЕЗО: 500</div>
+                <div class="res-text">СЕРЕБРО: 500</div>
+            </div>
         </div>
 
         <div id="dialog-box">
-            Маршал Кай: "Мой Лорд, мы на месте. Шкала загрузки заполнила пустую область, ресурсы на складах. Каковы будут ваши приказы?"
+            Маршал Кай: "Мой Лорд, я убрал все лишние фоны. Текст ресурсов теперь можно двигать через 'gap' и 'padding', чтобы он попал точно в ячейки вашей панели."
         </div>
     </div>
 
     <script>
-        // Логика загрузки (нацелена на нижнюю шкалу арта)
+        // Анимация загрузки под твою шкалу
         let progress = 0;
-        const fill = document.getElementById('fill');
-        const loaderScreen = document.getElementById('loading-screen');
-
-        const loadingInterval = setInterval(() => {
-            progress += Math.random() * 5;
-            if (progress > 62) progress = 62; // 62% — примерная длина пустой области в арте
-            fill.style.width = progress + '%';
-
-            if (progress >= 62) {
-                clearInterval(loadingInterval);
+        let loader = setInterval(() => {
+            progress += 3;
+            // Коэффициент 0.615 подбирает длину полоски под рисунок
+            document.getElementById('fill').style.width = (progress * 0.615) + '%'; 
+            if(progress >= 100) {
+                clearInterval(loader);
                 setTimeout(() => {
-                    loaderScreen.style.opacity = '0';
-                    setTimeout(() => loaderScreen.remove(), 1000);
+                    document.getElementById('loading-screen').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
                 }, 800);
             }
-        }, 150);
+        }, 100);
     </script>
 </body>
 </html>
