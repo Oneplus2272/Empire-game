@@ -17,21 +17,37 @@
         .loader-bar { width: 40%; height: 15px; background: rgba(0,0,0,0.8); border: 1px solid #ffd700; border-radius: 10px; margin-bottom: 100px; overflow: hidden; }
         .loader-fill { width: 0%; height: 100%; background: #ffd700; transition: width 0.3s; }
 
-        /* --- ИГРОВОЙ МИР --- */
-        #game-ui { width: 100%; height: 100%; background: url('map.png') no-repeat center center; background-size: cover; position: relative; }
+        /* --- ИГРОВОЙ МИР (КАРТА) --- */
+        #game-ui { 
+            width: 100%; height: 100%; 
+            background: url('map.png') no-repeat center center; /* ТВОЯ КАРТА */
+            background-size: cover; 
+            position: relative; 
+        }
 
-        /* КАЙ В ВЕРХНЕМ ЛЕВОМ УГЛУ */
-        .kai-avatar-zone {
-            position: absolute; top: 20px; left: 20px;
-            display: flex; align-items: center; gap: 15px; z-index: 50;
+        /* РАМКА С КАЕМ В ЛЕВОМ ВЕРХНЕМ УГЛУ */
+        .kai-interface-zone {
+            position: absolute; 
+            top: 10px; 
+            left: 10px;
+            width: 350px; 
+            height: 180px;
+            background: url('interface_kai_frame.png') no-repeat center; /* ТВОЯ РАМКА */
+            background-size: contain;
+            display: flex;
+            align-items: center;
+            padding-left: 25px;
+            z-index: 100;
         }
         .kai-portrait {
-            width: 100px; height: 100px;
-            background: url('marshal_blank.png') no-repeat center;
-            background-size: contain; border: 2px solid #ffd700; border-radius: 50%;
+            width: 110px; height: 110px;
+            background: url('marshal_blank.png') no-repeat center; /* ПОРТРЕТ */
+            background-size: contain;
         }
-        .kai-info { color: white; text-shadow: 2px 2px 4px #000; }
-        .kai-name { font-size: 20px; font-weight: bold; color: #ffaa00; }
+        .kai-label {
+            color: #ffaa00; font-weight: bold; font-size: 18px;
+            margin-left: 10px; text-shadow: 2px 2px 2px #000;
+        }
 
         /* РЕСУРСЫ НАВЕРХУ ПО ЦЕНТРУ */
         .top-res-center {
@@ -40,24 +56,26 @@
             background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain;
             display: flex; justify-content: center; align-items: center; gap: 30px; padding-bottom: 15px;
+            z-index: 90;
         }
         .res-item { display: flex; flex-direction: column; align-items: center; width: 80px; }
         .res-icon { width: 35px; height: 35px; object-fit: contain; }
         .res-val { color: #ffd700; font-size: 14px; font-weight: bold; margin-top: 5px; }
 
-        /* ДИАЛОГОВОЕ ОКНО ВНИЗУ */
-        .bottom-dialog {
+        /* ДИАЛОГОВОЕ ОКНО (ТЕКСТ) ВНИЗУ */
+        #dialog-box {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 800px; height: 180px;
-            background: url('interface_kai_frame.png') no-repeat center;
-            background-size: 100% 100%;
-            display: flex; align-items: center; padding: 0 50px; color: white;
+            width: 800px; height: 150px;
+            background: rgba(0, 0, 0, 0.8); /* Если есть картинка для текста, замени здесь */
+            border: 2px solid #8b4513; border-radius: 15px;
+            display: flex; align-items: center; padding: 20px 40px; color: white;
+            z-index: 110;
         }
-        .text-box { font-size: 20px; line-height: 1.4; }
+        .text-box { font-size: 19px; line-height: 1.4; }
         .btn-next {
-            position: absolute; bottom: 25px; right: 40px;
-            background: rgba(0,0,0,0.6); color: #ffd700; border: 1px solid #ffd700;
-            padding: 8px 15px; cursor: pointer; font-weight: bold;
+            position: absolute; bottom: 15px; right: 30px;
+            background: #5a4a3a; color: #ffd700; border: 1px solid #ffd700;
+            padding: 5px 15px; cursor: pointer; font-weight: bold;
         }
     </style>
 </head>
@@ -68,12 +86,9 @@
     </div>
 
     <div id="game-ui">
-        <div class="kai-avatar-zone">
+        <div class="kai-interface-zone">
             <div class="kai-portrait"></div>
-            <div class="kai-info">
-                <div class="kai-name">Маршал Кай</div>
-                <div style="font-size: 12px;">Советник империи</div>
-            </div>
+            <div class="kai-label">Маршал Кай</div>
         </div>
 
         <div class="top-res-center">
@@ -85,8 +100,8 @@
             <div class="res-item"><img src="icon_gold_chest.png" class="res-icon"><span class="res-val">50</span></div>
         </div>
 
-        <div id="dialog-layer" class="bottom-dialog">
-            <div id="main-text" class="text-box">Мой Лорд! Я перебрался в левый угол, чтобы не мешать обзору. Ресурсы теперь в центре. Мы готовы начинать?</div>
+        <div id="dialog-box">
+            <div id="main-text" class="text-box">Мой Лорд! Карта (`map.png`) перед вами. Я занял позицию в левом верхнем углу в рамке `interface_kai_frame.png`.</div>
             <button class="btn-next" onclick="next()">Далее</button>
         </div>
     </div>
@@ -95,7 +110,7 @@
         // Скрипт загрузки
         let p = 0;
         let itv = setInterval(() => {
-            p += Math.random() * 12;
+            p += 8;
             if(p > 100) p = 100;
             document.getElementById('fill').style.width = p + '%';
             if(p >= 100) {
@@ -105,13 +120,13 @@
                     setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
                 }, 500);
             }
-        }, 200);
+        }, 150);
 
-        // Сюжет
+        // Тексты
         const dialogs = [
-            "Эти запасы наверху пригодятся нам для строительства первой Ратуши.",
-            "Нажмите на карту, чтобы выбрать место для застройки.",
-            "Вперёд, к величию!"
+            "Взгляните на карту. Нам нужно выбрать место для строительства казарм.",
+            "Ресурсная панель сверху показывает наше состояние. Дерева хватит.",
+            "Жду ваших приказов!"
         ];
         let idx = 0;
         function next() {
@@ -119,7 +134,7 @@
                 document.getElementById('main-text').innerText = dialogs[idx];
                 idx++;
             } else {
-                document.getElementById('dialog-layer').style.display = 'none';
+                document.getElementById('dialog-box').style.display = 'none';
             }
         }
     </script>
