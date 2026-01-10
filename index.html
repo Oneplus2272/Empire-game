@@ -7,117 +7,137 @@
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
 
-        /* --- ЭКРАН ЗАГРУЗКИ --- */
+        /* ЭКРАН ЗАГРУЗКИ */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            /* Исправлено название файла согласно скриншоту */
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
             background-size: contain; background-color: #000;
-            z-index: 2000; transition: opacity 1s ease-in-out;
-            display: flex; justify-content: center; align-items: center;
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
         }
 
-        /* Контейнер для шкалы, чтобы она не улетала при смене размера экрана */
-        .loading-container {
+        /* КОНТЕЙНЕР ШКАЛЫ */
+        .loader-wrapper {
             position: relative;
-            width: 100vmin; /* Привязка к размеру фоновой картинки */
+            width: 100vmin;
             height: 100vmin;
-            pointer-events: none;
+        }
+
+        #loading-bar-bg {
+            position: absolute;
+            bottom: 8.5%; /* Опустил чуть ниже по твоему запросу */
+            left: 20.8%;
+            width: 58.5%;
+            height: 2.5%;
+            background: rgba(0, 0, 0, 0.5); /* Фон внутри желоба */
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #fill {
             position: absolute;
-            bottom: 11.2%; /* Выровнено под желоб на картинке */
-            left: 20.8%;
-            height: 2.2%;
+            top: 0; left: 0;
+            height: 100%;
             width: 0%;
-            background: linear-gradient(to right, #b8860b, #ffd700);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-            border-radius: 2px;
+            background: linear-gradient(90deg, #d4af37, #ffd700, #d4af37);
+            background-size: 200% 100%;
+            animation: shine 2s infinite linear; /* Анимация перелива */
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+            transition: width 0.1s linear;
         }
 
-        /* --- КАРТА --- */
-        #map-bg {
+        /* ТЕКСТ ПРОЦЕНТОВ */
+        #percent-text {
+            position: relative;
+            z-index: 10;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.5vh;
+            text-shadow: 1px 1px 2px #000;
+            pointer-events: none;
+        }
+
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ОСНОВНОЙ ИНТЕРФЕЙС (КАРТА И КАЙ) */
+        #map {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('map.png') no-repeat center center;
             background-size: cover; z-index: 1;
         }
 
-        /* --- ИНТЕРФЕЙС КАЯ --- */
         .kai-hud {
             position: absolute; top: 10px; left: 10px;
             width: 140px; height: 180px; z-index: 100;
-        }
-        .kai-frame {
-            position: absolute; width: 100%; height: 100%;
             background: url('1000007362.png') no-repeat center;
-            background-size: contain; z-index: 5;
+            background-size: contain;
         }
-        .kai-img {
+        .kai-face {
             position: absolute; top: 11%; left: 11%; width: 78%; height: 50%;
-            z-index: 2; overflow: hidden;
+            overflow: hidden; z-index: -1;
         }
-        .kai-img img { width: 100%; height: 100%; object-fit: cover; }
+        .kai-face img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- РЕСУРСЫ (Имена из твоей папки) --- */
-        .res-container {
+        /* РЕСУРСЫ */
+        .res-line {
             position: absolute; top: 15px; left: 160px;
-            display: flex; gap: 15px; z-index: 90;
+            display: flex; gap: 12px; z-index: 90;
         }
-        .res-unit { display: flex; flex-direction: column; align-items: center; width: 60px; }
-        .res-icon { width: 55px; height: 55px; background-size: contain; background-repeat: no-repeat; background-position: center; }
-        .res-val { color: #ffd700; font-weight: bold; font-size: 16px; text-shadow: 2px 2px 2px #000; }
+        .res-item { text-align: center; width: 55px; }
+        .res-icon { width: 50px; height: 50px; background-size: contain; background-repeat: no-repeat; margin-bottom: 2px; }
+        .res-val { color: #ffd700; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px #000; }
 
-        /* --- ДИАЛОГ --- */
-        #dialog {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 600px; padding: 15px;
-            background: rgba(0,0,0,0.85); border: 1px solid #b8860b;
-            color: white; border-radius: 10px; text-align: center; z-index: 150;
-        }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div class="loading-container">
-            <div id="fill"></div>
+        <div class="loader-wrapper">
+            <div id="loading-bar-bg">
+                <div id="fill"></div>
+                <div id="percent-text">0%</div>
+            </div>
         </div>
     </div>
 
-    <div id="map-bg"></div>
+    <div id="map"></div>
 
     <div class="kai-hud">
-        <div class="kai-frame"></div>
-        <div class="kai-img"><img src="marshal_blank.png"></div>
+        <div class="kai-face"><img src="marshal_blank.png"></div>
     </div>
 
-    <div class="res-container">
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_bread.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_wood.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_stone.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_iron_ore.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_silver_ingot.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_gold_chest.png');"></div><div class="res-val">500</div></div>
+    <div class="res-line">
+        <div class="res-item"><div class="res-icon" style="background-image: url('icon_bread.png')"></div><div class="res-val">500</div></div>
+        <div class="res-item"><div class="res-icon" style="background-image: url('icon_wood.png')"></div><div class="res-val">500</div></div>
+        <div class="res-item"><div class="res-icon" style="background-image: url('icon_stone.png')"></div><div class="res-val">500</div></div>
+        <div class="res-item"><div class="res-item"><div class="res-icon" style="background-image: url('icon_iron_ore.png')"></div><div class="res-val">500</div></div>
+        <div class="res-item"><div class="res-icon" style="background-image: url('icon_silver_ingot.png')"></div><div class="res-val">500</div></div>
+        <div class="res-item"><div class="res-icon" style="background-image: url('icon_gold_chest.png')"></div><div class="res-val">500</div></div>
     </div>
-
-    <div id="dialog">Маршал Кай: "Мой Лорд, я исправил загрузочный экран и привязал шкалу к желобу. Теперь всё идеально!"</div>
 
     <script>
-        let prg = 0;
+        let p = 0;
+        let fill = document.getElementById('fill');
+        let txt = document.getElementById('percent-text');
+
         let loader = setInterval(() => {
-            prg += 2;
-            // Коэффициент 0.58 подобран, чтобы полоска заполнила шкалу ровно до конца
-            document.getElementById('fill').style.width = (prg * 0.58) + '%';
-            if(prg >= 100) {
+            p += 1;
+            fill.style.width = p + '%';
+            txt.innerText = p + '%';
+
+            if(p >= 100) {
                 clearInterval(loader);
                 setTimeout(() => {
-                    const ls = document.getElementById('loading-screen');
-                    ls.style.opacity = '0';
-                    setTimeout(() => ls.style.display = 'none', 1000);
+                    document.getElementById('loading-screen').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loading-screen').remove(), 800);
                 }, 500);
             }
-        }, 50);
+        }, 40);
     </script>
 </body>
 </html>
