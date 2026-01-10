@@ -2,27 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Empire: Rise of Legends</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #000; font-family: 'Arial', sans-serif;
+            touch-action: none; /* Убирает лишние жесты на смартфонах */
+        }
 
         /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
-            background-size: contain; 
-            z-index: 2000; /* Поднял выше всех, чтобы скрыть Кая */
-            display: flex; justify-content: center; align-items: center;
+            background-size: contain; background-color: #000;
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
             transition: opacity 1s ease-in-out;
         }
 
-        /* ПОЛОСКА: Твои координаты с укороченной длиной */
+        /* Полоска: используем vh и vw для точности на всех экранах */
         #fill {
             position: absolute;
-            bottom: 4.3%; 
-            left: 13.4%;  
-            height: 3.5%; 
-            width: 0%;    
+            bottom: 4.3%; left: 13.4%; 
+            height: 3.5%; width: 0%;    
             background: linear-gradient(to right, #b8860b, #ffd700, #b8860b);
             border-radius: 4px;
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
@@ -31,60 +33,70 @@
 
         /* --- ИГРОВОЙ МИР --- */
         #game-world { 
-            width: 100%; height: 100%; 
+            width: 100vw; height: 100vh; 
             background: url('map.png') no-repeat center center; 
             background-size: cover; position: relative; 
             z-index: 10;
         }
 
-        /* РАМКА КАЯ */
+        /* Группируем интерфейс в один контейнер для масштабирования на мелких экранах */
+        .ui-wrapper {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* Чтобы можно было кликать карту сквозь пустоты */
+        }
+
+        /* РАМКА КАЯ: размер в 'vmin' делает её пропорциональной экрану */
         .kai-frame {
-            position: absolute; top: 10px; left: 10px;
-            width: 320px; height: 160px;
+            position: absolute; top: 2vmin; left: 2vmin;
+            width: 40vmin; height: 20vmin;
             background: url('interface_kai_frame.png') no-repeat center center;
             background-size: contain;
-            background-color: transparent !important;
-            z-index: 100;
+            pointer-events: auto; z-index: 100;
         }
 
         .kai-mask {
-            position: absolute;
-            top: 18%; left: 10%; 
-            width: 35%; height: 65%;
-            overflow: hidden;
-            background: transparent;
+            position: absolute; top: 18%; left: 10%; width: 35%; height: 65%;
+            overflow: hidden; background: transparent;
         }
         .kai-mask img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* ПАНЕЛЬ РЕСУРСОВ */
+        /* ПАНЕЛЬ РЕСУРСОВ: адаптивное центрирование */
         .resource-header {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 1000px; height: 120px;
+            width: 90vw; max-width: 1000px; height: 12vh;
             background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain;
-            background-color: transparent !important;
             display: flex; justify-content: center;
-            z-index: 90;
+            pointer-events: auto; z-index: 90;
         }
 
         .res-container {
             display: flex;
-            margin-top: 45px; 
-            gap: 75px;        
+            margin-top: 4vh; /* Высота подстраивается под экран */
+            gap: 5vw;        /* Расстояние между цифрами в % от ширины */
+            max-width: 800px;
         }
 
         .res-text {
-            color: #ffd700; font-weight: bold; font-size: 16px;
+            color: #ffd700; font-weight: bold; font-size: 2vmin; /* Текст масштабируется */
             text-shadow: 2px 2px 3px #000;
-            width: 80px; text-align: center;
+            flex: 1; text-align: center;
         }
 
+        /* ДИАЛОГ: адаптивная ширина */
         #dialog-box {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 600px; padding: 20px;
-            background: rgba(0,0,0,0.8); border: 2px solid #8b4513;
+            position: absolute; bottom: 5vh; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 600px; padding: 2vmin;
+            background: rgba(0,0,0,0.85); border: 1px solid #8b4513;
             color: white; border-radius: 10px; text-align: center;
-            z-index: 150;
+            font-size: 2.2vmin; pointer-events: auto; z-index: 150;
+        }
+
+        /* Скрываем всё при загрузке на мобильных, чтобы не дергалось */
+        @media (max-width: 600px) {
+            .res-container { gap: 4vw; margin-top: 3.5vh; }
+            .res-text { font-size: 3vmin; }
+            #dialog-box { font-size: 4vmin; width: 90%; }
         }
     </style>
 </head>
@@ -95,24 +107,26 @@
     </div>
 
     <div id="game-world">
-        <div class="kai-frame">
-            <div class="kai-mask">
-                <img src="marshal_blank.png" alt="Kai">
+        <div class="ui-wrapper">
+            <div class="kai-frame">
+                <div class="kai-mask">
+                    <img src="marshal_blank.png" alt="Kai">
+                </div>
             </div>
-        </div>
 
-        <div class="resource-header">
-            <div class="res-container">
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
+            <div class="resource-header">
+                <div class="res-container">
+                    <div class="res-text">500</div>
+                    <div class="res-text">500</div>
+                    <div class="res-text">500</div>
+                    <div class="res-text">500</div>
+                    <div class="res-text">500</div>
+                </div>
             </div>
-        </div>
 
-        <div id="dialog-box">
-            Маршал Кай: "Мой Лорд, шкала стала короче и теперь не вылетает за границы. Я появляюсь только после полной загрузки карты."
+            <div id="dialog-box">
+                Маршал Кай: "Мой Лорд, я адаптировал интерфейс. Теперь на телефонах и планшетах рамки и ресурсы будут уменьшаться пропорционально экрану."
+            </div>
         </div>
     </div>
 
@@ -120,7 +134,6 @@
         let p = 0;
         let loader = setInterval(() => {
             p += 2;
-            /* Изменил коэффициент с 0.612 на 0.54, чтобы полоска была короче */
             document.getElementById('fill').style.width = (p * 0.54) + '%';
             
             if(p >= 100) {
