@@ -3,121 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empire: Rise of Legends</title>
+    <title>Empire: Coordinate Picker</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: sans-serif; }
 
-        /* --- ЭКРАН ЗАГРУЗКИ --- */
+        /* ФОН ЗАГРУЗКИ (На весь экран для калибровки) */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            display: flex; justify-content: center; align-items: center;
-            background: #000; z-index: 2000; transition: opacity 1s;
-        }
-
-        /* Контейнер арта для точного позиционирования шкалы */
-        .loading-art {
-            position: relative;
-            width: 100vmin; /* Растягиваем по минимальной стороне экрана */
-            height: 100vmin;
             background: url('1000007369.png') no-repeat center center;
-            background-size: contain;
+            background-size: contain; z-index: 2000;
         }
 
-        /* ПОЛОСКА ЗАГРУЗКИ (Исправленные координаты) */
-        #fill {
-            position: absolute;
-            /* Координаты шкалы на твоем арте */
-            bottom: 11.5%; 
-            left: 20.5%;
-            width: 0%;    /* Заполняется скриптом */
-            height: 2.2%; /* Толщина шкалы */
-            background: linear-gradient(to right, #b8860b, #ffd700);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-            border-radius: 2px;
-        }
-
-        /* --- ИГРОВОЙ МИР (КАРТА) --- */
-        #map-bg {
+        /* КАРТА (Проверяем видимость) */
+        #game-map {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('map.png') no-repeat center center;
             background-size: cover; z-index: 1;
         }
 
-        /* ИНТЕРФЕЙС КАЯ (ВЕРХНИЙ ЛЕВЫЙ УГОЛ) */
-        .kai-hud {
-            position: absolute; top: 10px; left: 10px;
-            width: 140px; height: 165px; z-index: 100;
+        /* ПОЛОСКА (ВИЗУАЛЬНАЯ ПРОВЕРКА) */
+        #fill {
+            position: absolute;
+            background: rgba(255, 215, 0, 0.7);
+            height: 10px; /* Пока просто полоска для теста */
+            border: 1px solid white;
+            pointer-events: none;
         }
-        .kai-frame {
-            position: absolute; width: 100%; height: 100%;
-            background: url('1000007362.png') no-repeat center;
-            background-size: contain; z-index: 5;
-        }
-        .kai-img {
-            position: absolute; top: 12%; left: 11%; width: 78%; height: 52%;
-            z-index: 2; overflow: hidden;
-        }
-        .kai-img img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* РЕСУРСЫ (УМЕНЬШЕННЫЕ И В РЯД) */
-        .res-panel {
-            position: absolute; top: 15px; left: 160px; right: 10px;
-            display: flex; gap: 15px; z-index: 90;
-        }
-        .res-unit { display: flex; flex-direction: column; align-items: center; width: 55px; }
-        .res-icon { 
-            width: 50px; height: 50px; background-size: contain; 
-            background-repeat: no-repeat; background-position: center; 
-        }
-        .res-val { color: #ffd700; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px #000; }
-
-        #dialog {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 80%; background: rgba(0,0,0,0.8); border: 1px solid #ffd700;
-            color: white; padding: 15px; border-radius: 8px; text-align: center; z-index: 150;
+        /* ИНФО-ПАНЕЛЬ (ДЛЯ ТЕБЯ) */
+        #coords-info {
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: lime; padding: 15px;
+            z-index: 3000; border-radius: 10px; text-align: center;
+            pointer-events: none; width: 80%;
         }
     </style>
 </head>
 <body>
 
+    <div id="coords-info">
+        Кликни в НАЧАЛО шкалы, потом в КОНЕЦ.<br>
+        <span id="output">Ожидание клика...</span>
+    </div>
+
     <div id="loading-screen">
-        <div class="loading-art">
-            <div id="fill"></div>
-        </div>
+        <div id="fill"></div>
     </div>
-
-    <div id="map-bg"></div>
-
-    <div class="kai-hud">
-        <div class="kai-frame"></div>
-        <div class="kai-img"><img src="marshal_blank.png"></div>
-    </div>
-
-    <div class="res-panel">
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_bread.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_wood.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_stone.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_iron_ore.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_silver_ingot.png');"></div><div class="res-val">500</div></div>
-        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_gold_chest.png');"></div><div class="res-val">500</div></div>
-    </div>
-
-    <div id="dialog">Маршал Кай: "Мой Лорд, карта местности развернута, ресурсы под контролем. Готов вести армию в бой!"</div>
+    
+    <div id="game-map"></div>
 
     <script>
-        let prg = 0;
-        let loader = setInterval(() => {
-            prg += 2;
-            // Коэффициент 0.605 делает длину полоски идеальной для твоей шкалы
-            document.getElementById('fill').style.width = (prg * 0.605) + '%';
-            if(prg >= 100) {
-                clearInterval(loader);
-                setTimeout(() => {
-                    document.getElementById('loading-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
-                }, 500);
+        let clicks = [];
+        const screen = document.getElementById('loading-screen');
+        const output = document.getElementById('output');
+        const fill = document.getElementById('fill');
+
+        screen.onclick = function(e) {
+            // Считаем координаты в процентах от экрана
+            let x = (e.clientX / window.innerWidth) * 100;
+            let y = (e.clientY / window.innerHeight) * 100;
+            
+            clicks.push({x, y});
+
+            if (clicks.length === 1) {
+                output.innerText = `Начало по X: ${x.toFixed(2)}%. Теперь кликни в конец шкалы.`;
+                fill.style.left = x + "%";
+                fill.style.top = y + "%";
+                fill.style.width = "5px";
+            } 
+            else if (clicks.length === 2) {
+                let startX = clicks[0].x;
+                let endX = clicks[1].x;
+                let width = endX - startX;
+                let top = clicks[0].y;
+
+                output.innerHTML = `Квадрат Кая готов! Координаты для шкалы:<br>
+                <b>LEFT: ${startX.toFixed(2)}%</b><br>
+                <b>WIDTH: ${width.toFixed(2)}%</b><br>
+                <b>TOP: ${top.toFixed(2)}%</b>`;
+
+                fill.style.width = width + "%";
+                clicks = []; // Сброс для новой пробы
             }
-        }, 50);
+        }
     </script>
 </body>
 </html>
