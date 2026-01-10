@@ -5,33 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Empire: Rise of Legends</title>
     <style>
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #000; font-family: 'Arial', sans-serif; 
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
 
-        /* КАРТА - ТЕПЕРЬ ОНА ТОЧНО ДОЛЖНА БЫТЬ ВИДНА */
-        #game-map {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: url('map.png') no-repeat center center;
-            background-size: cover;
-            z-index: 1; /* Самый нижний слой */
-        }
-
-        /* ЗАГРУЗОЧНЫЙ ЭКРАН */
+        /* --- ЭКРАН ЗАГРУЗКИ --- */
         #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('loading_screen_marshal_kai.png') no-repeat center center;
-            background-size: contain; background-color: #000; z-index: 2000;
-            transition: opacity 1s ease-in-out;
-        }
-        #fill {
-            position: absolute; bottom: 4.3%; left: 13.4%; height: 3.5%; width: 0%;
-            background: linear-gradient(to right, #b8860b, #ffd700);
-            box-shadow: 0 0 15px #ffd700; border-radius: 4px;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: #000; z-index: 2000; transition: opacity 1s;
         }
 
-        /* КАЙ В РАМКЕ */
+        /* Контейнер арта для точного позиционирования шкалы */
+        .loading-art {
+            position: relative;
+            width: 100vmin; /* Растягиваем по минимальной стороне экрана */
+            height: 100vmin;
+            background: url('1000007369.png') no-repeat center center;
+            background-size: contain;
+        }
+
+        /* ПОЛОСКА ЗАГРУЗКИ (Исправленные координаты) */
+        #fill {
+            position: absolute;
+            /* Координаты шкалы на твоем арте */
+            bottom: 11.5%; 
+            left: 20.5%;
+            width: 0%;    /* Заполняется скриптом */
+            height: 2.2%; /* Толщина шкалы */
+            background: linear-gradient(to right, #b8860b, #ffd700);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            border-radius: 2px;
+        }
+
+        /* --- ИГРОВОЙ МИР (КАРТА) --- */
+        #map-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('map.png') no-repeat center center;
+            background-size: cover; z-index: 1;
+        }
+
+        /* ИНТЕРФЕЙС КАЯ (ВЕРХНИЙ ЛЕВЫЙ УГОЛ) */
         .kai-hud {
             position: absolute; top: 10px; left: 10px;
             width: 140px; height: 165px; z-index: 100;
@@ -47,90 +59,62 @@
         }
         .kai-img img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* РЕСУРСЫ (УМЕНЬШЕННЫЕ) */
-        .res-row {
+        /* РЕСУРСЫ (УМЕНЬШЕННЫЕ И В РЯД) */
+        .res-panel {
             position: absolute; top: 15px; left: 160px; right: 10px;
-            display: flex; justify-content: flex-start; gap: 2vw; z-index: 90;
+            display: flex; gap: 15px; z-index: 90;
         }
-        .res-card {
-            display: flex; flex-direction: column; align-items: center; width: 65px;
+        .res-unit { display: flex; flex-direction: column; align-items: center; width: 55px; }
+        .res-icon { 
+            width: 50px; height: 50px; background-size: contain; 
+            background-repeat: no-repeat; background-position: center; 
         }
-        .res-icon {
-            width: 60px; height: 60px; 
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            filter: drop-shadow(1px 2px 4px rgba(0,0,0,0.8));
-        }
-        .res-val {
-            color: #ffd700; font-weight: bold; font-size: 16px;
-            text-shadow: 2px 2px 2px #000; margin-top: 2px;
-        }
+        .res-val { color: #ffd700; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px #000; }
 
-        /* ДИАЛОГОВОЕ ОКНО */
         #dialog {
-            position: absolute; bottom: 5vh; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 650px; padding: 15px;
-            background: rgba(10, 8, 5, 0.9); border: 1px solid #b8860b;
-            color: #fff; text-align: center; border-radius: 10px; z-index: 150;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7);
-            font-size: 16px; line-height: 1.4;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 80%; background: rgba(0,0,0,0.8); border: 1px solid #ffd700;
+            color: white; padding: 15px; border-radius: 8px; text-align: center; z-index: 150;
         }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div id="fill"></div>
+        <div class="loading-art">
+            <div id="fill"></div>
+        </div>
     </div>
-    
-    <div id="game-map"></div>
+
+    <div id="map-bg"></div>
 
     <div class="kai-hud">
         <div class="kai-frame"></div>
         <div class="kai-img"><img src="marshal_blank.png"></div>
     </div>
 
-    <div class="res-row">
-        <div class="res-card">
-            <div class="res-icon" style="background-image: url('icon_bread.png');"></div>
-            <div class="res-val">500</div>
-        </div>
-        <div class="res-card">
-            <div class="res-icon" style="background-image: url('icon_wood.png');"></div>
-            <div class="res-val">500</div>
-        </div>
-        <div class="res-card">
-            <div class="res-icon" style="background-image: url('icon_stone.png');"></div>
-            <div class="res-val">500</div>
-        </div>
-        <div class="res-card">
-            <div class="res-icon" style="background-image: url('icon_iron_ore.png');"></div>
-            <div class="res-val">500</div>
-        </div>
-        <div class="res-card">
-            <div class="res-icon" style="background-image: url('icon_silver_ingot.png');"></div>
-            <div class="res-val">500</div>
-        </div>
-        <div class="res-card">
-            <div class="res-icon" style="background-image: url('icon_gold_chest.png');"></div>
-            <div class="res-val">500</div>
-        </div>
+    <div class="res-panel">
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_bread.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_wood.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_stone.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_iron_ore.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_silver_ingot.png');"></div><div class="res-val">500</div></div>
+        <div class="res-unit"><div class="res-icon" style="background-image: url('icon_gold_chest.png');"></div><div class="res-val">500</div></div>
     </div>
 
-    <div id="dialog">
-        Маршал Кай: "Мой Лорд, карта местности развернута, ресурсы оптимизированы для вашего экрана. Готов вести армию в бой!"
-    </div>
+    <div id="dialog">Маршал Кай: "Мой Лорд, карта местности развернута, ресурсы под контролем. Готов вести армию в бой!"</div>
 
     <script>
-        let progress = 0;
+        let prg = 0;
         let loader = setInterval(() => {
-            progress += 2;
-            document.getElementById('fill').style.width = (progress * 0.54) + '%';
-            if(progress >= 100) {
+            prg += 2;
+            // Коэффициент 0.605 делает длину полоски идеальной для твоей шкалы
+            document.getElementById('fill').style.width = (prg * 0.605) + '%';
+            if(prg >= 100) {
                 clearInterval(loader);
                 setTimeout(() => {
-                    const ls = document.getElementById('loading-screen');
-                    ls.style.opacity = '0';
-                    setTimeout(() => ls.remove(), 1000);
+                    document.getElementById('loading-screen').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
                 }, 500);
             }
         }, 50);
