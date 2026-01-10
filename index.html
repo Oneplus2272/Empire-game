@@ -3,95 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empire: Rise of Legends</title>
+    <title>Экспедиция Кая: Экономика</title>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
 
-        /* ЭКРАН ЗАГРУЗКИ */
+        /* --- ЗАГРУЗКА --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
             background-size: contain; background-color: #000;
-            z-index: 2000; display: flex; justify-content: center; align-items: center;
+            z-index: 2000; transition: opacity 1s; display: flex; justify-content: center; align-items: center;
         }
-
-        /* КОНТЕЙНЕР ШКАЛЫ */
-        .loader-wrapper {
-            position: relative;
-            width: 100vmin;
-            height: 100vmin;
-        }
-
+        .loader-wrapper { position: relative; width: 100vmin; height: 100vmin; }
         #loading-bar-bg {
-            position: absolute;
-            bottom: 8.5%; /* Опустил чуть ниже по твоему запросу */
-            left: 20.8%;
-            width: 58.5%;
-            height: 2.5%;
-            background: rgba(0, 0, 0, 0.5); /* Фон внутри желоба */
-            border-radius: 3px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: absolute; bottom: 8.5%; left: 20.8%; width: 58.5%; height: 2.5%;
+            background: rgba(0,0,0,0.6); border-radius: 3px; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
-
         #fill {
-            position: absolute;
-            top: 0; left: 0;
-            height: 100%;
-            width: 0%;
+            position: absolute; left: 0; height: 100%; width: 0%;
             background: linear-gradient(90deg, #d4af37, #ffd700, #d4af37);
-            background-size: 200% 100%;
-            animation: shine 2s infinite linear; /* Анимация перелива */
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
-            transition: width 0.1s linear;
+            background-size: 200% 100%; animation: shine 2s infinite linear;
+            box-shadow: 0 0 15px #ffd700;
         }
+        #percent-text { position: relative; z-index: 10; color: #fff; font-size: 1.5vh; text-shadow: 1px 1px 2px #000; }
+        @keyframes shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* ТЕКСТ ПРОЦЕНТОВ */
-        #percent-text {
-            position: relative;
-            z-index: 10;
-            color: #fff;
-            font-weight: bold;
-            font-size: 1.5vh;
-            text-shadow: 1px 1px 2px #000;
-            pointer-events: none;
-        }
-
-        @keyframes shine {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* ОСНОВНОЙ ИНТЕРФЕЙС (КАРТА И КАЙ) */
+        /* --- КАРТА --- */
         #map {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('map.png') no-repeat center center;
-            background-size: cover; z-index: 1;
+            background-size: cover; z-index: 1; cursor: crosshair;
         }
 
+        /* --- ИНТЕРФЕЙС КАЯ --- */
         .kai-hud {
-            position: absolute; top: 10px; left: 10px;
-            width: 140px; height: 180px; z-index: 100;
-            background: url('1000007362.png') no-repeat center;
-            background-size: contain;
+            position: absolute; top: 10px; left: 10px; width: 140px; height: 180px; z-index: 100;
+            background: url('1000007362.png') no-repeat center; background-size: contain;
         }
-        .kai-face {
-            position: absolute; top: 11%; left: 11%; width: 78%; height: 50%;
-            overflow: hidden; z-index: -1;
-        }
+        .kai-face { position: absolute; top: 11%; left: 11%; width: 78%; height: 50%; overflow: hidden; z-index: -1; }
         .kai-face img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* РЕСУРСЫ */
+        /* --- РЕСУРСЫ --- */
         .res-line {
-            position: absolute; top: 15px; left: 160px;
-            display: flex; gap: 12px; z-index: 90;
+            position: absolute; top: 15px; left: 160px; display: flex; gap: 12px; z-index: 110;
         }
-        .res-item { text-align: center; width: 55px; }
+        .res-item { text-align: center; width: 55px; transition: transform 0.1s; }
         .res-icon { width: 50px; height: 50px; background-size: contain; background-repeat: no-repeat; margin-bottom: 2px; }
         .res-val { color: #ffd700; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px #000; }
 
+        /* АНИМАЦИЯ ПРИ КЛИКЕ (+10) */
+        .floating-text {
+            position: absolute; color: #0f0; font-weight: bold; font-size: 20px;
+            text-shadow: 1px 1px 2px #000; pointer-events: none;
+            animation: floatUp 1s forwards; z-index: 500;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -105,39 +74,102 @@
         </div>
     </div>
 
-    <div id="map"></div>
+    <div id="map" onclick="collectResource(event)"></div>
 
     <div class="kai-hud">
         <div class="kai-face"><img src="marshal_blank.png"></div>
     </div>
 
     <div class="res-line">
-        <div class="res-item"><div class="res-icon" style="background-image: url('icon_bread.png')"></div><div class="res-val">500</div></div>
-        <div class="res-item"><div class="res-icon" style="background-image: url('icon_wood.png')"></div><div class="res-val">500</div></div>
-        <div class="res-item"><div class="res-icon" style="background-image: url('icon_stone.png')"></div><div class="res-val">500</div></div>
-        <div class="res-item"><div class="res-item"><div class="res-icon" style="background-image: url('icon_iron_ore.png')"></div><div class="res-val">500</div></div>
-        <div class="res-item"><div class="res-icon" style="background-image: url('icon_silver_ingot.png')"></div><div class="res-val">500</div></div>
-        <div class="res-item"><div class="res-icon" style="background-image: url('icon_gold_chest.png')"></div><div class="res-val">500</div></div>
+        <div class="res-item" id="res-bread">
+            <div class="res-icon" style="background-image: url('icon_bread.png')"></div>
+            <div class="res-val">500</div>
+        </div>
+        <div class="res-item" id="res-wood">
+            <div class="res-icon" style="background-image: url('icon_wood.png')"></div>
+            <div class="res-val">500</div>
+        </div>
+        <div class="res-item" id="res-stone">
+            <div class="res-icon" style="background-image: url('icon_stone.png')"></div>
+            <div class="res-val">500</div>
+        </div>
+        <div class="res-item" id="res-iron">
+            <div class="res-icon" style="background-image: url('icon_iron_ore.png')"></div>
+            <div class="res-val">500</div>
+        </div>
+        <div class="res-item" id="res-silver">
+            <div class="res-icon" style="background-image: url('icon_silver_ingot.png')"></div>
+            <div class="res-val">500</div>
+        </div>
+        <div class="res-item" id="res-gold">
+            <div class="res-icon" style="background-image: url('icon_gold_chest.png')"></div>
+            <div class="res-val">500</div>
+        </div>
     </div>
 
     <script>
+        // ДАННЫЕ ИГРЫ
+        let resources = {
+            bread: 500, wood: 500, stone: 500, iron: 500, silver: 500, gold: 500
+        };
+
+        // 1. ЛОГИКА ЗАГРУЗКИ
         let p = 0;
-        let fill = document.getElementById('fill');
-        let txt = document.getElementById('percent-text');
-
         let loader = setInterval(() => {
-            p += 1;
-            fill.style.width = p + '%';
-            txt.innerText = p + '%';
-
+            p++;
+            document.getElementById('fill').style.width = p + '%';
+            document.getElementById('percent-text').innerText = p + '%';
             if(p >= 100) {
                 clearInterval(loader);
                 setTimeout(() => {
                     document.getElementById('loading-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loading-screen').remove(), 800);
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').remove();
+                        startGame(); // Запускаем экономику после загрузки
+                    }, 800);
                 }, 500);
             }
-        }, 40);
+        }, 30);
+
+        // 2. ЭКОНОМИКА (Пассивный доход)
+        function startGame() {
+            setInterval(() => {
+                resources.bread += 1;
+                resources.wood += 1;
+                updateUI();
+            }, 2000); // Каждые 2 секунды +1 к еде и дереву
+        }
+
+        // 3. ОБНОВЛЕНИЕ ЭКРАНА
+        function updateUI() {
+            document.querySelector('#res-bread .res-val').innerText = Math.floor(resources.bread);
+            document.querySelector('#res-wood .res-val').innerText = Math.floor(resources.wood);
+            document.querySelector('#res-stone .res-val').innerText = Math.floor(resources.stone);
+            document.querySelector('#res-iron .res-val').innerText = Math.floor(resources.iron);
+            document.querySelector('#res-silver .res-val').innerText = Math.floor(resources.silver);
+            document.querySelector('#res-gold .res-val').innerText = Math.floor(resources.gold);
+        }
+
+        // 4. СБОР ПО КЛИКУ
+        function collectResource(e) {
+            // Добавляем +10 к случайному ресурсу
+            const resKeys = Object.keys(resources);
+            const randomRes = resKeys[Math.floor(Math.random() * resKeys.length)];
+            resources[randomRes] += 10;
+            
+            updateUI();
+
+            // Создаем всплывающий текст
+            const text = document.createElement('div');
+            text.className = 'floating-text';
+            text.innerText = '+10';
+            text.style.left = e.clientX + 'px';
+            text.style.top = e.clientY + 'px';
+            document.body.appendChild(text);
+
+            // Удаляем текст через секунду
+            setTimeout(() => text.remove(), 1000);
+        }
     </script>
 </body>
 </html>
