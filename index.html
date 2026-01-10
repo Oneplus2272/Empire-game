@@ -4,130 +4,129 @@
     <meta charset="UTF-8">
     <title>Empire: Rise of Legends</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Georgia', serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'serif'; }
 
         /* --- ЗАГРУЗОЧНЫЙ ЭКРАН --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
-            background-size: 80%; /* Немного уменьшил, как ты просил */
-            z-index: 1000; display: flex; justify-content: center; align-items: flex-end;
+            background-size: contain; z-index: 1000;
+            display: flex; justify-content: center; align-items: flex-end;
             transition: opacity 1s ease-in-out;
         }
 
-        /* Твоя пустая шкала (фон) и прогресс */
-        .loader-container {
-            width: 400px; height: 40px; 
-            background: url('loading_bar_empty.png') no-repeat center; /* ТВОЯ ПУСТАЯ ШКАЛА */
-            background-size: contain; margin-bottom: 100px; position: relative;
-        }
-        .loader-fill {
-            position: absolute; top: 10px; left: 15px; /* Подгони под вырез своей шкалы */
-            height: 20px; width: 0%;
-            background: linear-gradient(90deg, #8b4513, #ffd700);
-            box-shadow: 0 0 10px #ffd700; transition: width 0.3s;
+        /* Контейнер для полоски, наложенный прямо на пустую шкалу в арте */
+        .loader-wrapper {
+            position: relative;
+            width: 100%; height: 100%; /* Весь экран, чтобы точно позиционировать */
+            pointer-events: none;
         }
 
-        /* --- ИГРОВОЙ ЭКРАН --- */
+        .loader-fill {
+            position: absolute;
+            /* Позиция подобрана под нижнюю пустую шкалу на твоем арте */
+            bottom: 6.5%; left: 19%; 
+            width: 0%; height: 4.5%;
+            background: linear-gradient(90deg, #d4af37, #f9e4b7);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
+            border-radius: 20px;
+            transition: width 0.3s linear;
+        }
+
+        /* --- ИГРОВОЙ МИР --- */
         #game-ui { 
             width: 100%; height: 100%; 
-            background: url('map.png') no-repeat center center; background-size: cover; 
-            position: relative; 
+            background: url('map.png') no-repeat center center; 
+            background-size: cover; position: relative; 
         }
 
-        /* КАЙ В РАМКЕ (МАСКА) - ВЕРХНИЙ ЛЕВЫЙ УГОЛ */
-        .kai-container {
+        /* КАЙ В ТВОЕЙ РАМКЕ (МАСКА) */
+        .kai-hud {
             position: absolute; top: 10px; left: 10px;
-            width: 280px; height: 160px;
+            width: 300px; height: 150px;
             background: url('interface_kai_frame.png') no-repeat center;
             background-size: contain; z-index: 100;
-            display: flex; align-items: center; justify-content: center;
         }
         .kai-mask {
-            width: 95px; height: 95px; /* Размер выреза в рамке */
-            border-radius: 50%; /* Чтобы вписаться в круглый вырез */
+            position: absolute;
+            top: 25px; left: 32px; /* Подгонка под вырез в interface_kai_frame.png */
+            width: 95px; height: 95px;
             overflow: hidden;
-            position: absolute; left: 35px; top: 32px; /* Позиция лица в рамке */
+            border-radius: 50%; /* Создаем круглую маску */
         }
         .kai-mask img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* РЕСУРСЫ НАВЕРХУ ПО ЦЕНТРУ */
-        .top-res-center {
+        /* ПАНЕЛЬ РЕСУРСОВ (ЧИСТАЯ, БЕЗ ФОНА) */
+        .resource-header {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
             width: 900px; height: 100px;
             background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain;
-            display: flex; justify-content: center; align-items: center; gap: 40px;
-            z-index: 90; padding-bottom: 20px;
+            background-color: transparent; /* Убираем любой серый фон */
+            display: flex; justify-content: center; align-items: center; 
+            gap: 40px; padding-bottom: 25px; z-index: 90;
         }
         .res-text {
-            color: #ffd700; font-weight: bold; font-size: 15px;
-            text-shadow: 1px 1px 2px #000;
+            color: #ffd700; font-weight: bold; font-size: 16px;
+            text-shadow: 2px 2px 2px #000;
         }
 
-        /* ДИАЛОГ ВНИЗУ */
+        /* ТЕКСТ ДИАЛОГА */
         #dialog-box {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 700px; height: 120px;
-            background: rgba(0,0,0,0.85); border: 1px solid #ffd700; border-radius: 10px;
-            display: flex; align-items: center; padding: 20px; color: white; z-index: 110;
-        }
-        .btn-next {
-            position: absolute; bottom: 10px; right: 20px;
-            background: #4a3a2a; color: #ffd700; border: 1px solid #ffd700;
-            padding: 5px 15px; cursor: pointer;
+            width: 750px; padding: 20px;
+            background: rgba(0,0,0,0.8); border: 2px solid #8b4513;
+            color: white; border-radius: 15px; text-align: center;
         }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <div class="loader-container">
+        <div class="loader-wrapper">
             <div id="fill" class="loader-fill"></div>
         </div>
     </div>
 
     <div id="game-ui">
-        <div class="kai-container">
+        <div class="kai-hud">
             <div class="kai-mask">
-                <img src="marshal_blank.png" alt="Кай">
+                <img src="marshal_blank.png" alt="Marshal Kai">
             </div>
-            <div style="position:absolute; right:40px; top:65px; color:#ffaa00; font-weight:bold;">Кай</div>
         </div>
 
-        <div class="top-res-center">
-            <div class="res-text">ХЛЕБ: <span id="r1">500</span></div>
-            <div class="res-text">ДЕРЕВО: <span id="r2">500</span></div>
-            <div class="res-text">КАМЕНЬ: <span id="r3">500</span></div>
-            <div class="res-text">ЖЕЛЕЗО: <span id="r4">500</span></div>
-            <div class="res-text">СЕРЕБРО: <span id="r5">500</span></div>
+        <div class="resource-header">
+            <div class="res-text">ХЛЕБ: 500</div>
+            <div class="res-text">ДЕРЕВО: 500</div>
+            <div class="res-text">КАМЕНЬ: 500</div>
+            <div class="res-text">ЖЕЛЕЗО: 500</div>
+            <div class="res-text">СЕРЕБРО: 500</div>
         </div>
 
         <div id="dialog-box">
-            <div id="main-text">Мой Лорд, всё готово. Ресурсы на складах (по 500), я в левом углу. Начинаем постройку?</div>
-            <button class="btn-next" onclick="next()">Далее</button>
+            Маршал Кай: "Мой Лорд, мы на месте. Шкала загрузки заполнила пустую область, ресурсы на складах. Каковы будут ваши приказы?"
         </div>
     </div>
 
     <script>
-        // Загрузка (твоя пустая шкала наполняется)
-        let p = 0;
-        let itv = setInterval(() => {
-            p += 5;
-            document.getElementById('fill').style.width = p + '%';
-            if(p >= 100) {
-                clearInterval(itv);
+        // Логика загрузки (нацелена на нижнюю шкалу арта)
+        let progress = 0;
+        const fill = document.getElementById('fill');
+        const loaderScreen = document.getElementById('loading-screen');
+
+        const loadingInterval = setInterval(() => {
+            progress += Math.random() * 5;
+            if (progress > 62) progress = 62; // 62% — примерная длина пустой области в арте
+            fill.style.width = progress + '%';
+
+            if (progress >= 62) {
+                clearInterval(loadingInterval);
                 setTimeout(() => {
-                    document.getElementById('loading-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
-                }, 500);
+                    loaderScreen.style.opacity = '0';
+                    setTimeout(() => loaderScreen.remove(), 1000);
+                }, 800);
             }
         }, 150);
-
-        function next() {
-            document.getElementById('main-text').innerText = "Лесопилка потребует 200 дерева. Прикажете начать?";
-            // Здесь можно добавить логику уменьшения ресурса
-        }
     </script>
 </body>
 </html>
