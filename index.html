@@ -11,35 +11,33 @@
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
-            background-size: contain; background-color: #000;
-            z-index: 2000; display: flex; justify-content: center; align-items: center;
+            background-size: contain; background-color: #000; z-index: 2000;
         }
 
-        .loader-wrapper { position: relative; width: 100vmin; height: 100vmin; }
+        .loader-wrapper { position: relative; width: 100vmin; height: 100vmin; margin: auto; }
 
         #loading-bar-bg {
             position: absolute; 
-            bottom: 9.3%; /* Опустил точно в желоб */
-            left: 17.5%;  /* Выровнял начало */
-            width: 65%;   /* Растянул на всю длину желоба */
-            height: 2.2%; 
-            background: rgba(0,0,0,0.4); 
-            border-radius: 2px; overflow: hidden; 
-            display: flex; align-items: center; justify-content: center;
+            bottom: 8.2%; /* Опустил еще ниже, чтобы попасть в рамку */
+            left: 16.8%;  /* Выравнивание по левому краю желоба */
+            width: 66.5%; /* Ширина на весь желоб */
+            height: 2.1%; 
+            background: rgba(0,0,0,0.5); border-radius: 2px; overflow: hidden; 
         }
 
         #fill {
-            position: absolute; left: 0; height: 100%; width: 0%;
+            height: 100%; width: 0%;
             background: linear-gradient(90deg, #d4af37, #ffd700, #d4af37);
             background-size: 200% 100%; animation: shine 2s infinite linear;
-            box-shadow: 0 0 10px #ffd700;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+            display: flex; align-items: center; justify-content: center;
         }
 
-        #percent-text { position: relative; z-index: 10; color: #fff; font-size: 1.4vh; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+        #percent-text { color: #fff; font-size: 1.3vh; font-weight: bold; text-shadow: 1px 1px 2px #000; white-space: nowrap; }
 
         @keyframes shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* --- КАРТА И ИНТЕРФЕЙС --- */
+        /* --- ИГРОВОЙ МИР --- */
         #map { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('map.png') no-repeat center center; background-size: cover; z-index: 1; }
 
         .kai-hud {
@@ -49,14 +47,11 @@
         .kai-face { position: absolute; top: 11%; left: 11%; width: 78%; height: 50%; overflow: hidden; z-index: -1; }
         .kai-face img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- ОБНОВЛЕННЫЕ РЕСУРСЫ --- */
-        .res-line { position: absolute; top: 15px; left: 160px; display: flex; gap: 10px; z-index: 110; }
-        .res-item { text-align: center; width: 58px; }
-        .res-icon { width: 52px; height: 52px; background-size: contain; background-repeat: no-repeat; margin-bottom: 2px; }
+        /* --- ПАНЕЛЬ РЕСУРСОВ --- */
+        .res-line { position: absolute; top: 15px; left: 160px; display: flex; gap: 8px; z-index: 110; }
+        .res-item { text-align: center; width: 60px; }
+        .res-icon { width: 55px; height: 55px; background-size: contain; background-repeat: no-repeat; margin-bottom: 2px; }
         .res-val { color: #ffd700; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px #000; }
-
-        .floating-text { position: absolute; color: #ffd700; font-weight: bold; font-size: 24px; text-shadow: 2px 2px 4px #000; pointer-events: none; animation: floatUp 1s forwards; z-index: 500; }
-        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-60px); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -64,13 +59,12 @@
     <div id="loading-screen">
         <div class="loader-wrapper">
             <div id="loading-bar-bg">
-                <div id="fill"></div>
-                <div id="percent-text">0%</div>
+                <div id="fill"><span id="percent-text">0%</span></div>
             </div>
         </div>
     </div>
 
-    <div id="map" onclick="collectAll(event)"></div>
+    <div id="map" onclick="clickCollect(event)"></div>
 
     <div class="kai-hud">
         <div class="kai-face"><img src="marshal_blank.png"></div>
@@ -88,7 +82,7 @@
     <script>
         let resources = { bread: 500, wood: 500, stone: 500, iron: 500, silver: 500, gold: 500 };
 
-        // ЗАГРУЗКА
+        // Скрипт загрузки
         let p = 0;
         let loader = setInterval(() => {
             p++;
@@ -100,44 +94,37 @@
                     document.getElementById('loading-screen').style.opacity = '0';
                     setTimeout(() => {
                         document.getElementById('loading-screen').remove();
-                        startEconomy();
+                        startGlobalEconomy();
                     }, 800);
                 }, 500);
             }
-        }, 30);
+        }, 40);
 
-        // ЭКОНОМИКА (Все ресурсы!)
-        function startEconomy() {
+        // ЭКОНОМИКА (Все 6 ресурсов)
+        function startGlobalEconomy() {
             setInterval(() => {
-                resources.bread += 0.5;
-                resources.wood += 0.4;
-                resources.stone += 0.3;
-                resources.iron += 0.2;
-                resources.silver += 0.1;
-                resources.gold += 0.05;
-                updateUI();
+                resources.bread += 0.8; 
+                resources.wood += 0.6;
+                resources.stone += 0.4;
+                resources.iron += 0.3;
+                resources.silver += 0.15;
+                resources.gold += 0.08;
+                updateDisplay();
             }, 1000);
         }
 
-        function updateUI() {
-            for (let key in resources) {
-                document.querySelector(`#res-${key} .res-val`).innerText = Math.floor(resources[key]);
+        function updateDisplay() {
+            for (let id in resources) {
+                let el = document.querySelector(`#res-${id} .res-val`);
+                if(el) el.innerText = Math.floor(resources[id]);
             }
         }
 
-        // КЛИК (Сбор всех видов по очереди)
-        function collectAll(e) {
-            const keys = Object.keys(resources);
-            const rand = keys[Math.floor(Math.random() * keys.length)];
-            resources[rand] += 15;
-            updateUI();
-
-            const t = document.createElement('div');
-            t.className = 'floating-text';
-            t.innerText = '+15';
-            t.style.left = e.clientX + 'px'; t.style.top = e.clientY + 'px';
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 1000);
+        function clickCollect(e) {
+            const resKeys = Object.keys(resources);
+            const r = resKeys[Math.floor(Math.random() * resKeys.length)];
+            resources[r] += 20;
+            updateDisplay();
         }
     </script>
 </body>
