@@ -5,131 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Empire: Rise of Legends</title>
     <style>
-        /* Обнуляем всё, чтобы не было прокрутки */
         * { box-sizing: border-box; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; background: #000; 
         }
 
-        /* ОСНОВНОЙ КОНТЕЙНЕР (Фиксированное рабочее поле) */
-        #game-container {
+        /* КАРТА НА ВЕСЬ ЭКРАН */
+        #game-canvas {
             position: absolute;
-            top: 50%; left: 50%;
-            width: 1920px; /* Базовое разрешение */
-            height: 1080px;
-            transform-origin: center center;
-            transform: translate(-50%, -50%); /* Центрирование и масштаб (через JS) */
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background: url('map.png') no-repeat center center;
-            background-size: cover;
+            background-size: cover; /* Это растянет карту на весь экран */
+            z-index: 1;
         }
 
-        /* --- ЭКРАН ЗАГРУЗКИ --- */
+        /* ЭКРАН ЗАГРУЗКИ */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('loading_screen_marshal_kai.png') no-repeat center center;
             background-size: contain; background-color: #000;
-            z-index: 2000; transition: opacity 1s ease-in-out;
+            z-index: 2000; transition: opacity 1s;
         }
-
         #fill {
-            position: absolute;
-            bottom: 4.3%; left: 13.4%; 
-            height: 3.5%; width: 0%;    
-            background: linear-gradient(to right, #b8860b, #ffd700);
-            border-radius: 4px; box-shadow: 0 0 15px #ffd700;
+            position: absolute; bottom: 4.3%; left: 13.4%; 
+            height: 3.5%; width: 0%; background: #ffd700;
+            box-shadow: 0 0 15px #ffd700; border-radius: 4px;
         }
 
-        /* --- ИНТЕРФЕЙС (Внутри game-container координаты всегда одинаковые) --- */
+        /* ИНТЕРФЕЙС КАЯ (ЛЕВЫЙ ВЕРХНИЙ УГОЛ) */
+        .kai-section {
+            position: absolute; top: 10px; left: 10px;
+            width: 150px; height: 180px; z-index: 100;
+        }
         .kai-frame {
-            position: absolute; top: 20px; left: 20px;
-            width: 320px; height: 160px;
+            position: absolute; width: 100%; height: 100%;
             background: url('interface_kai_frame.png') no-repeat center;
-            background-size: contain; z-index: 100;
+            background-size: contain;
         }
-        .kai-mask {
-            position: absolute; top: 18%; left: 10%; width: 35%; height: 65%;
-            overflow: hidden;
+        .kai-portrait {
+            position: absolute; top: 18%; left: 12%; 
+            width: 75%; height: 55%; overflow: hidden;
         }
-        .kai-mask img { width: 100%; height: 100%; object-fit: cover; }
+        .kai-portrait img { width: 100%; height: 100%; object-fit: cover; }
 
-        .resource-header {
+        /* ПАНЕЛЬ РЕСУРСОВ (ЦЕНТР ВЕРХ) */
+        .res-panel {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 1000px; height: 120px;
+            width: 90%; max-width: 800px; height: 100px;
             background: url('resource_bar_panel.png') no-repeat center top;
             background-size: contain; z-index: 90;
+            display: flex; justify-content: center;
+        }
+        .res-grid {
+            display: grid; grid-template-columns: repeat(6, 1fr);
+            width: 85%; margin-top: 45px; /* Подгонка под светлые ячейки */
+        }
+        .res-val {
+            color: #ffd700; font-weight: bold; font-size: 14px;
+            text-align: center; text-shadow: 1px 1px 2px #000;
         }
 
-        .res-container {
-            display: flex; margin-top: 45px; gap: 75px; justify-content: center;
+        /* РАМКА ДИАЛОГА (ВНИЗУ) */
+        .dialog-container {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 700px; height: 120px;
+            /* Используем frame_marshal.png как рамку для текста */
+            background: url('frame_marshal.png') no-repeat center;
+            background-size: 100% 100%;
+            z-index: 150; display: flex; align-items: center; padding: 0 40px;
         }
-        .res-text {
-            color: #ffd700; font-weight: bold; font-size: 24px;
-            text-shadow: 2px 2px 3px #000; width: 80px; text-align: center;
-        }
-
-        #dialog-box {
-            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            width: 800px; padding: 30px;
-            background: rgba(0,0,0,0.85); border: 2px solid #8b4513;
-            color: white; border-radius: 15px; text-align: center; font-size: 28px;
+        .dialog-text {
+            color: #fff; font-size: 16px; text-align: center; width: 100%;
+            text-shadow: 1px 1px 2px #000; line-height: 1.2;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div id="fill"></div>
+    <div id="loading-screen"><div id="fill"></div></div>
+
+    <div id="game-canvas"></div>
+
+    <div class="kai-section">
+        <div class="kai-frame"></div>
+        <div class="kai-portrait"><img src="marshal_blank.png"></div>
     </div>
 
-    <div id="game-container">
-        
-        <div class="kai-frame">
-            <div class="kai-mask"><img src="marshal_blank.png"></div>
+    <div class="res-panel">
+        <div class="res-grid">
+            <div class="res-val">500</div>
+            <div class="res-val">500</div>
+            <div class="res-val">500</div>
+            <div class="res-val">500</div>
+            <div class="res-val">500</div>
+            <div class="res-val">500</div>
         </div>
+    </div>
 
-        <div class="resource-header">
-            <div class="res-container">
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-                <div class="res-text">500</div>
-            </div>
+    <div class="dialog-container">
+        <div class="dialog-text">
+            Маршал Кай: "Мой Лорд! Я развернул карту и подготовил припасы. Теперь всё на своих местах!"
         </div>
-
-        <div id="dialog-box">
-            Маршал Кай: "Теперь я применил метод контейнера. Интерфейс нарисован в 1920px и просто сжимается под любой экран без потери точности."
-        </div>
-
     </div>
 
     <script>
-        // ФУНКЦИЯ АДАПТАЦИИ (SCALE)
-        function resizeGame() {
-            const gameContainer = document.getElementById('game-container');
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            
-            // Вычисляем масштаб по меньшей стороне
-            const scale = Math.min(width / 1920, height / 1080);
-            
-            gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
-        }
-
-        window.addEventListener('resize', resizeGame);
-        resizeGame(); // Запуск при старте
-
-        // ЗАГРУЗКА
         let p = 0;
         let loader = setInterval(() => {
             p += 2;
-            document.getElementById('fill').style.width = (p * 0.54) + '%';
+            document.getElementById('fill').style.width = (p * 0.6) + '%';
             if(p >= 100) {
                 clearInterval(loader);
                 setTimeout(() => {
                     document.getElementById('loading-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 1000);
+                    setTimeout(() => document.getElementById('loading-screen').remove(), 1000);
                 }, 500);
             }
         }, 50);
